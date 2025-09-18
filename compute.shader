@@ -1,7 +1,7 @@
 #version 430 core
 
 layout(local_size_x = 1, local_size_y = 1) in;
-layout(rgba32f, binding = 0) uniform image2D texOutput;
+layout(rgba32f, binding = 0) writeonly restrict uniform image2D texOutput;
 
 layout(std430, binding = 1) readonly buffer transmissionBuffer {
     //Multiple elements in the form:
@@ -28,6 +28,10 @@ void main(){
         pixel.g += mix(gi, 0, distance(pixelCoordsNorm, vec2(xi, yi)) * 2);
         pixel.b += mix(bi, 0, distance(pixelCoordsNorm, vec2(xi, yi)) * 2);
     }
+
+    pixel.r = 1 - pixel.r;
+    pixel.g = 1 - pixel.g;
+    pixel.b = 1 - pixel.b;
 
     imageStore(texOutput, pixelCoords, pixel);
 }

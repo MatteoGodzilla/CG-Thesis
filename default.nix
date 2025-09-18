@@ -4,5 +4,10 @@ stdenv.mkDerivation {
     name = "opengl-thesis";
     system = builtins.currentsystem;
     src = ./.;
-    buildInputs = [ glfw ];
+    buildInputs = [ 
+        glfw
+        xorg.libX11
+        xorg.libXrandr
+        wayland
+    ];
 }
