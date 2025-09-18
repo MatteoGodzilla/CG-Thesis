@@ -5,6 +5,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <vector>
+#include "shader.h"
 
 void GLAPIENTRY
 MessageCallback( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam ) {
@@ -42,29 +43,12 @@ int main(){
     }
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(MessageCallback, 0);
-
-    std::ifstream computeFile = std::ifstream("compute.shader");
-    if(!computeFile.is_open()){
-        glfwTerminate();
-        return 4;
-    }
-
-    //Read shader
-    std::string computeSource = "";
-    std::string temp = "";
-    while(std::getline(computeFile, temp)){
-        computeSource += temp + "\n";
-    }
-    const char* computeSourceRaw = computeSource.c_str();
-    std::cout << computeSourceRaw << std::endl; 
     
-    GLuint compute = glCreateShader(GL_COMPUTE_SHADER);
-    glShaderSource(compute, 1, &computeSourceRaw , NULL); 
-    glCompileShader(compute);
+    //GLuint rayTracer = linkProgram(computeShaders);
+    GLuint rayTracer = linkProgram({
+        compileShader("compute.shader", GL_COMPUTE_SHADER)
+    });
 
-    GLuint rayTracer = glCreateProgram();
-    glAttachShader(rayTracer, compute);
-    glLinkProgram(rayTracer);
     
     //Texture buffer 
     //TODO: make this dynamic based on viewport dimentions
@@ -91,44 +75,10 @@ int main(){
     //std::cout << workGroupMax[0] << ", " << workGroupMax[0] << ", " << workGroupMax[0] << ", " << std::endl;
 
     //Vertex
-    std::ifstream vertexFile = std::ifstream("vertex.shader");
-    if(!vertexFile.is_open()){
-        glfwTerminate();
-        return 5;
-    }
-    std::string vertexSource = "";
-    while(std::getline(vertexFile, temp)){
-        vertexSource += temp + "\n";
-    }
-    std::cout << "========================" << std::endl;
-    std::cout << vertexSource << std::endl;
-
-    //Fragment
-    std::ifstream fragmentFile = std::ifstream("fragment.shader");
-    if(!fragmentFile.is_open()){
-        glfwTerminate();
-        return 6;
-    }
-    std::string fragmentSource = "";
-    while(std::getline(fragmentFile, temp)){
-        fragmentSource += temp + "\n";
-    }
-    std::cout << "========================" << std::endl;
-    std::cout << fragmentSource << std::endl;
-    
-    //Display program
-    GLuint display = glCreateProgram();
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);    
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);    
-    const char* vertexSourceRaw = vertexSource.c_str();
-    const char* fragmentSourceRaw = fragmentSource.c_str();
-    glShaderSource(vertexShader, 1, &vertexSourceRaw, NULL);
-    glShaderSource(fragmentShader, 1, &fragmentSourceRaw, NULL);
-    glCompileShader(vertexShader);
-    glCompileShader(fragmentShader);
-    glAttachShader(display, vertexShader);
-    glAttachShader(display, fragmentShader);
-    glLinkProgram(display);
+    GLuint display = linkProgram({
+        compileShader("vertex.shader", GL_VERTEX_SHADER),
+        compileShader("fragment.shader", GL_FRAGMENT_SHADER)
+    });
 
     //VAO    
     GLuint quadVAO;
