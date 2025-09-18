@@ -22,6 +22,7 @@ MessageCallback( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei
         std::cout << "LOG: " << message << std::endl;
     }
 }
+int resolution[2] = {800, 600};
 
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720
@@ -103,10 +104,10 @@ int main(){
     GLuint quadPositionVBO;
     glGenBuffers(1, &quadPositionVBO);
     float positions[] = {
-        -0.5, 0.5,
-        0.5, 0.5, 
-        0.5, -0.5,
-        -0.5, -0.5
+        -1, 1,
+        1, 1, 
+        1, -1,
+        -1, -1
     };
     glBindBuffer(GL_ARRAY_BUFFER, quadPositionVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
@@ -160,7 +161,7 @@ int main(){
     GLuint fboColor;
     glGenTextures(1, &fboColor);
     glBindTexture(GL_TEXTURE_2D, fboColor);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, WINDOW_WIDTH, WINDOW_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);  
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fboColor, 0);
@@ -193,6 +194,7 @@ int main(){
         glClear(GL_COLOR_BUFFER_BIT);
 
         glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        glViewport(0,0,textureWidth, textureHeight);
         glClearColor(0,0,0,1);
         glClear(GL_COLOR_BUFFER_BIT);
         glUseProgram(display);
@@ -202,16 +204,22 @@ int main(){
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         
+        glViewport(0,0,WINDOW_WIDTH, WINDOW_HEIGHT);
+        ImGui::DockSpaceOverViewport();
         ImGui::ShowDemoWindow(); // Show demo window! :)
-                                
-        ImGui::Begin("ViewPort");
+        ImGui::Begin("Settings");
         {
-            ImGui::Text("AAAAAAAAAAAAAAA");
-            //glActiveTexture(GL_TEXTURE0);
-            //glBindTexture(GL_TEXTURE_2D, fboColor);
-            ImGui::Image((void*)fboColor, ImVec2(400, 300));
+            ImGui::DragInt2("Render resolution", resolution);
         }
         ImGui::End();
+                               
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0,0));
+        ImGui::Begin("ViewPort");
+        {
+            ImGui::Image((ImTextureID)fboColor, ImGui::GetContentRegionAvail());
+        }
+        ImGui::End();
+        ImGui::PopStyleVar();
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
