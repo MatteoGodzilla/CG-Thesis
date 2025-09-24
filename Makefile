@@ -1,4 +1,4 @@
-FLAGS = -Wall -Wpedantic -g
+FLAGS = -Wall -Wpedantic -g -std=c++20 
 INCLUDE = -Iinclude -Iimgui -Iimgui/backends
 LIBS = -lglfw -lOpenGL -lX11
 
@@ -26,6 +26,9 @@ build/imgui: imgui/imgui.cpp imgui/imgui_demo.cpp imgui/imgui_draw.cpp imgui/img
 	g++ ${FLAGS} -c imgui/backends/imgui_impl_opengl3.cpp ${INCLUDE} -o build/imgui_impl_opengl3.o
 	g++ ${FLAGS} -c imgui/backends/imgui_impl_glfw.cpp ${INCLUDE} -o build/imgui_impl_glfw.o
 	touch build/imgui
+
+clean: 
+	rm -r build/
 
 install: main
 	cp main ${out}/

@@ -12,6 +12,7 @@
 #include "settings.h"
 #include "raytracer.h"
 #include "framebuffer.h"
+#include "planet.h"
 
 void GLAPIENTRY
 MessageCallback( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam ) {
@@ -123,6 +124,8 @@ int main(){
     GLuint transmissionBuffer;
     glGenBuffers(1, &transmissionBuffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, transmissionBuffer);
+
+    /*
     srand(time(NULL)); 
     std::vector<float> transmissionData;
 
@@ -132,8 +135,18 @@ int main(){
         transmissionData.push_back(v);
         std::cout << i << ":" << v << std::endl; 
     }
+    */
 
-    glBufferData(GL_SHADER_STORAGE_BUFFER, transmissionData.size() * sizeof(float), transmissionData.data(), GL_STATIC_READ);
+    std::vector<struct Planet> planets;
+    planets.push_back({ 
+        .position = {0,0,1},
+        .color = {0,1,0},
+        .radius = 5, 
+        .mass = 0.75
+    });
+
+
+    glBufferData(GL_SHADER_STORAGE_BUFFER, planets.size() * sizeof(struct Planet), planets.data(), GL_STATIC_READ);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, transmissionBuffer);
 
     //Framebuffer
