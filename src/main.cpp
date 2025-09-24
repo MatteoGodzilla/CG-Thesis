@@ -6,13 +6,12 @@
 #include <time.h>
 #include <stdlib.h>
 #include <vector>
-//Imgui
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
 //Project
 #include "shader.h"
-
+#include "ui.h"
+#include "settings.h"
+#include "raytracer.h"
+#include "framebuffer.h"
 
 void GLAPIENTRY
 MessageCallback( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam ) {
@@ -22,7 +21,6 @@ MessageCallback( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei
         std::cout << "LOG: " << message << std::endl;
     }
 }
-int resolution[2] = {800, 600};
 
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720
@@ -63,25 +61,10 @@ int main(){
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init();
 
-    //GLuint rayTracer = linkProgram(computeShaders);
-    GLuint rayTracer = linkProgram({
-        compileShader("compute.shader", GL_COMPUTE_SHADER)
-    });
-
-    //Texture buffer 
-    //TODO: make this dynamic based on viewport dimentions
-    int textureWidth = 800;
-    int textureHeight = 600;
-    GLuint textureOutput;
-    glGenTextures(1, &textureOutput);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, textureOutput);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureWidth, textureHeight, 0, GL_RGBA, GL_FLOAT, NULL);
-    glBindImageTexture(0, textureOutput, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+    UI ui;
+    Raytracer raytracer;
+    Settings* defaultSettings = ui.getSettings();
+    raytracer.update(defaultSettings->resolution[0], defaultSettings->resolution[1]);
 
     //Get maximum work group count
     //TODO: calculate best amount of work groups
@@ -154,79 +137,50 @@ int main(){
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, transmissionBuffer);
 
     //Framebuffer
-    GLuint fbo;
-    glGenFramebuffers(1, &fbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    //Framebuffer color texture
-    GLuint fboColor;
-    glGenTextures(1, &fboColor);
-    glBindTexture(GL_TEXTURE_2D, fboColor);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);  
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fboColor, 0);
+    Framebuffer framebuffer;
+    framebuffer.update(WINDOW_WIDTH, WINDOW_HEIGHT);
 
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!\n";
+    //Uniform stuff for the manual render
+    GLint raytracerSizeId = glGetUniformLocation(display,"raytracerOutputSize");
+    GLint viewportSizeId = glGetUniformLocation(display,"viewportSize");
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window)) {
-        /* Poll for and process events */
         glfwPollEvents();
 
-        //---ImGui---
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-
         //---Renderer---
-        // Dispatch compute shader
-        glUseProgram(rayTracer);
         //TODO: calculate best amount of work groups
-        glDispatchCompute((GLuint)textureWidth, (GLuint)textureHeight, 1);
+        Settings* settings = ui.getSettings();
+        if(ui.shouldDispatchFlag()){
+            int w = settings->resolution[0];
+            int h = settings->resolution[1];
+            raytracer.update(w, h);
+            raytracer.dispatch(w, h);
+            ui.clearDispatchFlag();
+        }
 
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
-        /* Render here */
-        glClearColor(1,0,0,1);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-        glViewport(0,0,textureWidth, textureHeight);
+        //---From compute shader output to framebuffer---
+        framebuffer.bind();
         glClearColor(0,0,0,1);
         glClear(GL_COLOR_BUFFER_BIT);
         glUseProgram(display);
         glBindVertexArray(quadVAO);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textureOutput);
+        glUniform2f(raytracerSizeId, settings->resolution[0], settings->resolution[1]);
+        glUniform2f(viewportSizeId, settings->viewportSize[0], settings->viewportSize[1]);
+        glBindTexture(GL_TEXTURE_2D, raytracer.getOutputTexture());
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        
-        glViewport(0,0,WINDOW_WIDTH, WINDOW_HEIGHT);
-        ImGui::DockSpaceOverViewport();
-        ImGui::ShowDemoWindow(); // Show demo window! :)
-        ImGui::Begin("Settings");
-        {
-            ImGui::DragInt2("Render resolution", resolution);
-        }
-        ImGui::End();
-                               
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0,0));
-        ImGui::Begin("ViewPort");
-        {
-            ImGui::Image((ImTextureID)fboColor, ImGui::GetContentRegionAvail());
-        }
-        ImGui::End();
-        ImGui::PopStyleVar();
+        framebuffer.unbind();
+      
+        //---UI---
+        ui.begin();
+        //ImGui::ShowDemoWindow(); 
+        ui.settings();
+        ui.viewport(framebuffer.getColorTexture());
+        ui.end();
 
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-        /* Swap front and back buffers */
         glfwSwapBuffers(window);
-
     }
 
     glfwTerminate();

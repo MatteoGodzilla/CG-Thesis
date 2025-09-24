@@ -17,6 +17,11 @@ void main(){
     pixelCoordsNorm.x = float(pixelCoords.x)/(gl_NumWorkGroups.x);
     pixelCoordsNorm.y = float(pixelCoords.y)/(gl_NumWorkGroups.y);
     
+    /*
+    pixel.r = pixelCoordsNorm.x;
+    pixel.g = pixelCoordsNorm.y;
+    */
+
     for(int i = 0; i < data.length(); i+= 5){
         float xi = data[i + 0];
         float yi = data[i + 1];
@@ -28,10 +33,12 @@ void main(){
         pixel.g += mix(gi, 0, distance(pixelCoordsNorm, vec2(xi, yi)) * 2);
         pixel.b += mix(bi, 0, distance(pixelCoordsNorm, vec2(xi, yi)) * 2);
     }
-
+    
+    /*
     pixel.r = 1 - pixel.r;
     pixel.g = 1 - pixel.g;
     pixel.b = 1 - pixel.b;
+    */
 
     imageStore(texOutput, pixelCoords, pixel);
 }
