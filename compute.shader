@@ -14,6 +14,22 @@ layout(std430, binding = 1) readonly buffer transmissionBuffer {
     Planet data[];
 };
 
+uniform vec2 viewportSize;
+uniform vec3 cameraPos;
+uniform vec3 lookDir;
+uniform vec3 upVector;
+uniform float vFov;
+
+//Orthographic projection
+vec3 viewportToWorld(vec2 viewNorm){
+    //In viewport, (0,0) is top left corner
+    vec3 right = cross(lookDir, upVector);
+    float hFov = vFov * viewportSize.x / viewportSize.y;
+    float x = viewNorm.x * 2 - 1;
+    float y = (1.0 - viewNorm.y) * 2 - 1;
+    return lookDir + x * hFov * right + y * vFov * upVector;
+}
+
 void main(){
     vec4 pixel = vec4(0,0,0,0);
     ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
@@ -22,14 +38,17 @@ void main(){
     pixelCoordsNorm.x = float(pixelCoords.x)/(gl_NumWorkGroups.x);
     pixelCoordsNorm.y = float(pixelCoords.y)/(gl_NumWorkGroups.y);
 
-    //TODO: pass these informations as a matrix uniform
-    //Orthographic projection
+    vec3 worldRay = viewportToWorld(pixelCoordsNorm); 
+    pixel.r = worldRay.x - int(worldRay.x);
+    pixel.g = worldRay.y - int(worldRay.y);
+
+    /*
     const float LEFT = -5; //meters
     const float RIGHT = 5; //meters
     const float UP = 5; //meters
     const float DOWN = -5; //meters
 
-    vec3 worldRay = vec3(0,0,0); 
+    //vec3 worldRay = vec3(0,0,0); 
     worldRay.x = LEFT + pixelCoordsNorm.x * (RIGHT - LEFT);
     worldRay.y = UP + pixelCoordsNorm.y * (DOWN - UP); //because y axis is flipped by opengl
 
@@ -42,6 +61,7 @@ void main(){
     }
 
     //Convert pixel norm coordinates to world rays
+    */
 
     /*
     pixel.r = pixelCoordsNorm.x;

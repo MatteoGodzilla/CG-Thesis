@@ -68,7 +68,6 @@ int main(){
     raytracer.update(defaultSettings->resolution[0], defaultSettings->resolution[1]);
 
     //Get maximum work group count
-    //TODO: calculate best amount of work groups
     int workGroupMax[3];
     glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &workGroupMax[0]);
     glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &workGroupMax[1]);
@@ -125,18 +124,6 @@ int main(){
     glGenBuffers(1, &transmissionBuffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, transmissionBuffer);
 
-    /*
-    srand(time(NULL)); 
-    std::vector<float> transmissionData;
-
-    //x normalized, y normalized, r, g, b
-    for(int i = 0; i < 5 * 3; i++){
-        float v = (float)rand() / RAND_MAX;
-        transmissionData.push_back(v);
-        std::cout << i << ":" << v << std::endl; 
-    }
-    */
-
     std::vector<struct Planet> planets;
     planets.push_back({ 
         .position = {0,0,1},
@@ -144,7 +131,6 @@ int main(){
         .radius = 5, 
         .mass = 0.75
     });
-
 
     glBufferData(GL_SHADER_STORAGE_BUFFER, planets.size() * sizeof(struct Planet), planets.data(), GL_STATIC_READ);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, transmissionBuffer);
@@ -161,7 +147,6 @@ int main(){
         glfwPollEvents();
 
         //---Renderer---
-        //TODO: calculate best amount of work groups
         Settings* settings = ui.getSettings();
         if(ui.shouldDispatchFlag()){
             int w = settings->resolution[0];

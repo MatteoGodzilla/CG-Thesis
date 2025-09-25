@@ -1,5 +1,5 @@
 FLAGS = -Wall -Wpedantic -g -std=c++20 
-INCLUDE = -Iinclude -Iimgui -Iimgui/backends
+INCLUDE = -Iinclude -Iimgui -Iimgui/backends -Iglm
 LIBS = -lglfw -lOpenGL -lX11
 
 main: build/renderer build/imgui

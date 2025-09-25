@@ -8,4 +8,5 @@ struct Settings {
     int viewportSize[2];
     //Flags
     bool shouldResizeBuffers = false;
+    bool alwaysDispatch = false;
 };

@@ -21,7 +21,8 @@ void UI::settings(){
         dirtyResolution[0] = active.viewportSize[0];
         dirtyResolution[1] = active.viewportSize[1];
     }
-    if(ImGui::Button("Render")){
+    ImGui::Checkbox("Continuous dispatch", &active.alwaysDispatch);
+    if(ImGui::Button("Render") || active.alwaysDispatch){
         shouldDispatch = true;
     }
 
