@@ -29,6 +29,33 @@ void UI::settings(){
     ImGui::End();
 }
 
+void UI::universe(std::vector<Planet>* ref){
+    ImGui::Begin("Universe");
+    for(size_t i = 0; i < ref->size(); i++){
+        Planet& p = ref->at(i);
+        if(ImGui::TreeNode(p.name.c_str())){
+            float posArray[3] = {p.position.x, p.position.y, p.position.z};
+            float colorArray[3] = {p.color.x, p.color.y, p.color.z};
+            bool modified = false;
+            modified |= ImGui::DragFloat3("Position", posArray);
+            modified |= ImGui::ColorEdit3("Color", colorArray);
+            modified |= ImGui::InputFloat("Radius (m)", &(p.radius));
+            modified |= ImGui::InputFloat("Mass (kg)", &(p.mass));
+            p.position.x = posArray[0];
+            p.position.y = posArray[1];
+            p.position.z = posArray[2];
+            p.color.x = colorArray[0];
+            p.color.y = colorArray[1];
+            p.color.z = colorArray[2];
+
+            shouldUpdateUniverse |= modified;
+
+            ImGui::TreePop();
+        }
+    }
+    ImGui::End();
+}
+
 void UI::viewport(GLuint framebufferTexture){
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0,0));
     ImGui::Begin("ViewPort");
@@ -59,4 +86,12 @@ bool UI::shouldDispatchFlag(){
 
 void UI::clearDispatchFlag(){
     shouldDispatch = 0;
+}
+
+bool UI::shouldUpdateUniverseFlag(){
+    return shouldUpdateUniverse;
+}
+
+void UI::clearUpdateUniverseFlag(){
+    shouldUpdateUniverse = 0;
 }

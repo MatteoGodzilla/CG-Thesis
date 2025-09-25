@@ -5,13 +5,16 @@ LIBS = -lglfw -lOpenGL -lX11
 main: build/renderer build/imgui
 	g++ build/*.o ${LIBS} -o main
 
-build/renderer: src/main.cpp src/glad.c src/shader.cpp src/ui.cpp src/raytracer.cpp src/framebuffer.cpp
+RENDER_SRC = src/main.cpp src/glad.c src/shader.cpp src/ui.cpp src/raytracer.cpp src/framebuffer.cpp src/planet.cpp
+RENDER_INC = include/shader.h include/ui.h include/raytracer.h include/framebuffer.h include/planet.h
+build/renderer: ${RENDER_SRC} ${RENDER_INC}
 	mkdir -p build
 	g++ ${FLAGS} -c src/main.cpp ${INCLUDE} -o build/main.o
 	g++ ${FLAGS} -c src/shader.cpp ${INCLUDE} -o build/shader.o
 	g++ ${FLAGS} -c src/ui.cpp ${INCLUDE} -o build/ui.o
 	g++ ${FLAGS} -c src/raytracer.cpp ${INCLUDE} -o build/raytracer.o
 	g++ ${FLAGS} -c src/framebuffer.cpp ${INCLUDE} -o build/framebuffer.o
+	g++ ${FLAGS} -c src/planet.cpp ${INCLUDE} -o build/planet.o
 	g++ ${FLAGS} -c src/glad.c ${INCLUDE} -o build/glad.o
 	touch build/renderer
 

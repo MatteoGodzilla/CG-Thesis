@@ -21,5 +21,5 @@ private:
     glm::vec3 position = {0,0,0};
     glm::vec3 look = {0,0,-1};
     glm::vec3 up = {0,1,0};
-    float verticalFov = 2;
+    float verticalFov = 10;
 };

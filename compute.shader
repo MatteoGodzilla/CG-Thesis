@@ -10,6 +10,11 @@ struct Planet {
     float mass;
 };
 
+struct Ray {
+    vec3 pos;
+    vec3 dir;
+};
+
 layout(std430, binding = 1) readonly buffer transmissionBuffer {
     Planet data[];
 };
@@ -21,14 +26,35 @@ uniform vec3 upVector;
 uniform float vFov;
 
 //Orthographic projection
-vec3 viewportToWorld(vec2 viewNorm){
+Ray viewportToWorldRay(vec2 viewNorm){
     //In viewport, (0,0) is top left corner
     vec3 right = cross(lookDir, upVector);
     float hFov = vFov * viewportSize.x / viewportSize.y;
     float x = viewNorm.x * 2 - 1;
     float y = (1.0 - viewNorm.y) * 2 - 1;
-    return lookDir + x * hFov * right + y * vFov * upVector;
+    //return lookDir + x * hFov * right + y * vFov * upVector;
+    return Ray(cameraPos + x * hFov * right + y * vFov * upVector, lookDir);
 }
+
+//If a collision exists, returns the closest one (aka lower t value)
+//Otherwise it returns -1
+float RaySphereIntersection(Ray ray, Planet sphere){
+    vec3 K = sphere.position - ray.pos;
+    float r = sphere.radius;
+    float a = dot(ray.dir, ray.dir);
+    float b = -2*dot(ray.dir, K);
+    float c = dot(K, K) - r*r;
+    float delta = b*b - 4*a*c;
+    if(delta >= 0){
+        float tPlus = (-b + sqrt(delta)) / (2*a);
+        float tMinus = (-b - sqrt(delta)) / (2*a);
+        //In theory tMinus should always be the closest?
+        //return tMinus;
+        return min(tPlus, tMinus);
+    } else {
+        return -1;
+    }
+};
 
 void main(){
     vec4 pixel = vec4(0,0,0,0);
@@ -38,55 +64,18 @@ void main(){
     pixelCoordsNorm.x = float(pixelCoords.x)/(gl_NumWorkGroups.x);
     pixelCoordsNorm.y = float(pixelCoords.y)/(gl_NumWorkGroups.y);
 
-    vec3 worldRay = viewportToWorld(pixelCoordsNorm); 
-    pixel.r = worldRay.x - int(worldRay.x);
-    pixel.g = worldRay.y - int(worldRay.y);
+    Ray worldRay = viewportToWorldRay(pixelCoordsNorm); 
 
-    /*
-    const float LEFT = -5; //meters
-    const float RIGHT = 5; //meters
-    const float UP = 5; //meters
-    const float DOWN = -5; //meters
-
-    //vec3 worldRay = vec3(0,0,0); 
-    worldRay.x = LEFT + pixelCoordsNorm.x * (RIGHT - LEFT);
-    worldRay.y = UP + pixelCoordsNorm.y * (DOWN - UP); //because y axis is flipped by opengl
-
-    vec2 delta = worldRay.xy - data[0].position.xy;
-    //pixel.rg = abs(delta);
-
-    //TESTING, DOES NOT WORK IN 3D
-    if(delta.x * delta.x + delta.y * delta.y <= data[0].radius * data[0].radius){
-        pixel.rgb = data[0].color;
+    float closestT = 9999999999.9;
+    vec3 closestColor = vec3(0, 0.6, 0.6);
+    for(int i = 0; i < data.length(); i++){
+        float t = RaySphereIntersection(worldRay, data[i]);
+        if(t >= 0 && t < closestT){
+            closestT = t;
+            closestColor = data[i].color;
+        }
     }
-
-    //Convert pixel norm coordinates to world rays
-    */
-
-    /*
-    pixel.r = pixelCoordsNorm.x;
-    pixel.g = pixelCoordsNorm.y;
-    */
-
-    /*
-    for(int i = 0; i < data.length(); i+= 5){
-        float xi = data[i + 0];
-        float yi = data[i + 1];
-        float ri = data[i + 2];
-        float gi = data[i + 3];
-        float bi = data[i + 4];
-
-        pixel.r += mix(ri, 0, distance(pixelCoordsNorm, vec2(xi, yi)) * 2);
-        pixel.g += mix(gi, 0, distance(pixelCoordsNorm, vec2(xi, yi)) * 2);
-        pixel.b += mix(bi, 0, distance(pixelCoordsNorm, vec2(xi, yi)) * 2);
-    }
-    */
-    
-    /*
-    pixel.r = 1 - pixel.r;
-    pixel.g = 1 - pixel.g;
-    pixel.b = 1 - pixel.b;
-    */
-
+   
+    pixel.rgb = closestColor;
     imageStore(texOutput, pixelCoords, pixel);
 }

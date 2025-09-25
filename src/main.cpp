@@ -125,14 +125,72 @@ int main(){
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, transmissionBuffer);
 
     std::vector<struct Planet> planets;
+
+    std::ifstream inFile("universe.txt");
+    if(inFile.is_open()){
+        std::string temp;
+        getline(inFile,temp);
+        int count = std::stoi(temp);
+        for(int i = 0; i < count; i++){
+            std::string collection;
+            for(int j = 0; j < 9; j++){
+                getline(inFile,temp);
+                collection += temp + '\n';
+            }
+            getline(inFile,temp); //empty line
+            std::cout << "-----" << std::endl << collection << "====" << std::endl;
+            planets.push_back(deserialize(collection));
+        }
+    }
+
+    /*
     planets.push_back({ 
-        .position = {0,0,1},
-        .color = {0,1,0},
+        .name = "Head",
+        .position = {0,0,-10},
+        .color = {1,1,1},
         .radius = 5, 
         .mass = 0.75
     });
+    planets.push_back({ 
+        .name = "Nose",
+        .position = {0,0,-5},
+        .color = {1,0.3,0},
+        .radius = 2, 
+        .mass = 0.75
+    });
+    planets.push_back({ 
+        .name = "Body",
+        .position = {0,-10,-10},
+        .color = {1,1,1},
+        .radius = 7.5, 
+        .mass = 0.75
+    });
+    planets.push_back({ 
+        .name = "Left eye",
+        .position = {2.5,2.5,-7.5},
+        .color = {0,0,0},
+        .radius = 1, 
+        .mass = 0.75
+    });
+    planets.push_back({ 
+        .name = "Right eye",
+        .position = {-2.5,2.5,-7.5},
+        .color = {0,0,0},
+        .radius = 1, 
+        .mass = 0.75
+    });
 
-    glBufferData(GL_SHADER_STORAGE_BUFFER, planets.size() * sizeof(struct Planet), planets.data(), GL_STATIC_READ);
+    std::ofstream outFile("universe.txt");
+    if(outFile.is_open()){
+        outFile << planets.size() << std::endl;
+        for(auto& p : planets){
+            outFile << serialize(p) << std::endl;
+        }
+    }
+    */
+
+    std::vector<PlanetGLSL> converted = planetsToGLSL(&planets);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, converted.size() * sizeof(struct PlanetGLSL), converted.data(), GL_STATIC_READ);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, transmissionBuffer);
 
     //Framebuffer
@@ -156,6 +214,13 @@ int main(){
             ui.clearDispatchFlag();
         }
 
+        if(ui.shouldUpdateUniverseFlag()){
+            std::vector<PlanetGLSL> converted = planetsToGLSL(&planets);
+            glBindBuffer(GL_SHADER_STORAGE_BUFFER, transmissionBuffer);
+            glBufferData(GL_SHADER_STORAGE_BUFFER, converted.size() * sizeof(struct PlanetGLSL), converted.data(), GL_STATIC_READ);
+            ui.clearUpdateUniverseFlag();
+        }
+
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
         //---From compute shader output to framebuffer---
@@ -175,6 +240,7 @@ int main(){
         ui.begin();
         //ImGui::ShowDemoWindow(); 
         ui.settings();
+        ui.universe(&planets);
         ui.viewport(framebuffer.getColorTexture());
         ui.end();
 
