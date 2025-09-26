@@ -15,6 +15,11 @@ struct Ray {
     vec3 dir;
 };
 
+struct Plane {
+    vec3 origin;
+    vec3 normal;
+};
+
 layout(std430, binding = 1) readonly buffer transmissionBuffer {
     Planet data[];
 };
@@ -32,8 +37,7 @@ Ray viewportToWorldRay(vec2 viewNorm){
     float hFov = vFov * viewportSize.x / viewportSize.y;
     float x = viewNorm.x * 2 - 1;
     float y = (1.0 - viewNorm.y) * 2 - 1;
-    //return lookDir + x * hFov * right + y * vFov * upVector;
-    return Ray(cameraPos + x * hFov * right + y * vFov * upVector, lookDir);
+    return Ray(cameraPos + x * hFov * right + y * vFov * upVector, normalize(lookDir));
 }
 
 //If a collision exists, returns the closest one (aka lower t value)
@@ -56,6 +60,46 @@ float RaySphereIntersection(Ray ray, Planet sphere){
     }
 };
 
+float RayPlaneIntersection(Ray ray, Plane plane){
+    vec3 k = ray.pos - plane.origin;
+    return -dot(k, plane.normal) / dot(ray.dir, plane.normal);
+}
+
+//Returns the t value of the point where the ray is closest to the center of the sphere
+float RaySphereClosestPoint(Ray ray, Planet sphere){
+    //WE ASSUME THAT THE DIRECTION OF THE RAY IS NORMALIZED 
+    return dot(ray.dir, sphere.position - ray.pos);
+}
+
+vec3 rayPoint(Ray ray, float t){
+    return ray.pos + t * ray.dir;
+}
+
+vec3 background(vec3 point, Plane backPlane){
+    vec3 planeUp = upVector; 
+    vec3 planeRight = cross(upVector, backPlane.normal);
+    vec3 K = point - backPlane.origin;
+    float planeX = dot(K, planeRight) / length(planeRight);
+    float planeY = dot(K, planeUp) / length(planeUp);
+    float resX = abs(planeX - int(planeX)); //[0,1)
+    float resY = abs(planeY - int(planeY)); //[0,1)
+    const float gridSize = 0.1;
+    vec3 result = vec3(0, 0.2, 0.2);
+    if(resX < gridSize || resY < gridSize){
+        result = vec3(0,0,0);
+    }
+    return result;
+}
+
+Ray bendRay(Ray original, Planet p, vec3 closestPoint){
+    float impactRadius = length(closestPoint - p.position);
+    float alpha = p.mass / (50 * impactRadius);
+    float deviation = length(original.dir) * tan(alpha);
+    vec3 towardsCenter = p.position - closestPoint;
+    vec3 newDir = normalize(original.dir + towardsCenter * deviation);
+    return Ray(closestPoint, newDir);
+}
+
 void main(){
     vec4 pixel = vec4(0,0,0,0);
     ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
@@ -66,16 +110,37 @@ void main(){
 
     Ray worldRay = viewportToWorldRay(pixelCoordsNorm); 
 
-    float closestT = 9999999999.9;
-    vec3 closestColor = vec3(0, 0.6, 0.6);
+    float closestDistance2 = 9999999999.9;
+    int closestPlanetI = -1;
+    vec3 closestPoint = vec3(0,0,0);
     for(int i = 0; i < data.length(); i++){
-        float t = RaySphereIntersection(worldRay, data[i]);
-        if(t >= 0 && t < closestT){
-            closestT = t;
-            closestColor = data[i].color;
+        float t = RaySphereClosestPoint(worldRay, data[i]);
+        vec3 P = rayPoint(worldRay, t);
+        vec3 K = P - data[i].position;
+        if(t >= 0 && dot(K,K) < closestDistance2){
+            closestDistance2 = dot(K,K);
+            closestPlanetI = i; 
+            closestPoint = P;
         }
     }
-   
-    pixel.rgb = closestColor;
+
+    float radius2 = data[closestPlanetI].radius * data[closestPlanetI].radius;
+    if(closestDistance2 < radius2){
+        //We have an intersection
+        pixel.rgb = data[closestPlanetI].color;
+    } else {
+        Plane backPlane = Plane(cameraPos + lookDir * 100, -lookDir);
+        //We have missed the planet -> draw atmosphere
+        vec3 atmosphere = vec3(1,1,1) - data[closestPlanetI].color;
+        float delta = closestDistance2 - radius2;
+        Ray bent = bendRay(worldRay, data[closestPlanetI], closestPoint);
+
+        float backT = RayPlaneIntersection(bent, backPlane);
+        vec3 backPoint = rayPoint(bent, backT);
+        vec3 backgroundColor = background(backPoint, backPlane);
+        //pixel.rgb = mix(backgroundColor, atmosphere, clamp((1 - delta / 50),0,1));
+        pixel.rgb = backgroundColor;
+    }
+    
     imageStore(texOutput, pixelCoords, pixel);
 }

@@ -18,8 +18,8 @@ private:
     GLuint upVectorId;
     GLuint vFovId;
     //actual camera values
-    glm::vec3 position = {0,0,0};
-    glm::vec3 look = {0,0,-1};
+    glm::vec3 position = {0,0,-5};
+    glm::vec3 look = {-1,0,0};
     glm::vec3 up = {0,1,0};
     float verticalFov = 10;
 };
