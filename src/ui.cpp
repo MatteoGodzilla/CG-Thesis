@@ -25,6 +25,9 @@ void UI::settings(){
     if(ImGui::Button("Render") || active.alwaysDispatch){
         shouldDispatch = true;
     }
+    if(ImGui::Button("Save to file")) {
+        shouldExportToFile = true;
+    }
 
     ImGui::End();
 }
@@ -94,4 +97,12 @@ bool UI::shouldUpdateUniverseFlag(){
 
 void UI::clearUpdateUniverseFlag(){
     shouldUpdateUniverse = 0;
+}
+
+bool UI::shouldExportFlag(){
+    return shouldExportToFile;
+}
+
+void UI::clearExportFlag(){
+    shouldExportToFile = 0;
 }

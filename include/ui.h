@@ -22,9 +22,12 @@ public:
     void clearDispatchFlag();
     bool shouldUpdateUniverseFlag();
     void clearUpdateUniverseFlag();
+    bool shouldExportFlag();
+    void clearExportFlag();
 private:
     Settings active;
     int dirtyResolution[2] = {DEFAULT_WIDTH, DEFAULT_HEIGHT};
     bool shouldDispatch = true;
     bool shouldUpdateUniverse = false;
+    bool shouldExportToFile = false;
 };
