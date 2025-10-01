@@ -2,3 +2,4 @@ docs/
 build/
 imgui.ini
 log.txt
+output*.png
