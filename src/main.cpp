@@ -18,8 +18,11 @@
 #include "framebuffer.h"
 #include "planet.h"
 
-void GLAPIENTRY
-MessageCallback( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam ) {
+#define WINDOW_WIDTH 1280
+#define WINDOW_HEIGHT 720
+#define UNIVERSE "universe.txt"
+
+void GLAPIENTRY MessageCallback( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam ) {
     if(type == GL_DEBUG_TYPE_ERROR){
         std::cerr << "GL ERROR: " << message << std::endl; 
     } else {
@@ -27,8 +30,53 @@ MessageCallback( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei
     }
 }
 
-#define WINDOW_WIDTH 1280
-#define WINDOW_HEIGHT 720
+void deserializeAll(const char* filename, Camera* camera, std::vector<Planet>* ref){
+    std::ifstream inFile(filename);
+    if(inFile.is_open()){
+        std::string temp;
+        getline(inFile,temp); //Camera 
+        inFile >> camera->position.x >> camera->position.y >> camera->position.z;
+        inFile >> camera->look.x >> camera->look.y >> camera->look.z;
+        inFile >> camera->up.x >> camera->up.y >> camera->up.z;
+        getline(inFile, temp); //consume the newline after up vector
+        getline(inFile, temp); //consume the empty line afterwards 
+        getline(inFile, temp); //get the number of planets
+        int count = std::stoi(temp);
+        for(int i = 0; i < count; i++){
+            Planet res = {"##", {0,0,0}, {0,0,0}, 0, 0};
+            getline(inFile, res.name);
+            inFile >> res.position.x >> res.position.y >> res.position.z;
+            inFile >> res.color.x >> res.color.y >> res.color.z;
+            inFile >> res.radius;
+            inFile >> res.mass;
+            ref->push_back(res);
+            getline(inFile, temp); //consume the newline after the radius
+            getline(inFile, temp); //consume the empty line afterwards
+        }
+        inFile.close();
+    }
+}
+
+void serializeAll(const char* filename, Camera* camera, std::vector<Planet>* ref){
+    std::ofstream outFile(filename);
+    if(outFile.is_open()){
+        outFile << "Camera" << std::endl;
+        outFile << camera->position.x << " " << camera->position.y << " " << camera->position.z << std::endl;
+        outFile << camera->look.x << " " << camera->look.y << " " << camera->look.z << std::endl;
+        outFile << camera->up.x << " " << camera->up.y << " " << camera->up.z << std::endl;
+        outFile << std::endl;
+        outFile << ref->size() << std::endl;
+        for(auto& p : *ref){
+            outFile << p.name << std::endl;
+            outFile << p.position.x << " " << p.position.y << " " <<  p.position.z << std::endl;
+            outFile << p.color.x << " " <<  p.color.y << " " <<  p.color.z << std::endl;
+            outFile << p.radius << std::endl;
+            outFile << p.mass << std::endl;
+            outFile << std::endl;
+        }
+        outFile.close();
+    }
+}
 
 int main(){
     GLFWwindow* window;
@@ -129,69 +177,7 @@ int main(){
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, transmissionBuffer);
 
     std::vector<struct Planet> planets;
-
-    std::ifstream inFile("universe.txt");
-    if(inFile.is_open()){
-        std::string temp;
-        getline(inFile,temp);
-        int count = std::stoi(temp);
-        for(int i = 0; i < count; i++){
-            std::string collection;
-            for(int j = 0; j < 9; j++){
-                getline(inFile,temp);
-                collection += temp + '\n';
-            }
-            getline(inFile,temp); //empty line
-            std::cout << "-----" << std::endl << collection << "====" << std::endl;
-            planets.push_back(deserialize(collection));
-        }
-    }
-
-    /*
-    planets.push_back({ 
-        .name = "Head",
-        .position = {0,0,-10},
-        .color = {1,1,1},
-        .radius = 5, 
-        .mass = 0.75
-    });
-    planets.push_back({ 
-        .name = "Nose",
-        .position = {0,0,-5},
-        .color = {1,0.3,0},
-        .radius = 2, 
-        .mass = 0.75
-    });
-    planets.push_back({ 
-        .name = "Body",
-        .position = {0,-10,-10},
-        .color = {1,1,1},
-        .radius = 7.5, 
-        .mass = 0.75
-    });
-    planets.push_back({ 
-        .name = "Left eye",
-        .position = {2.5,2.5,-7.5},
-        .color = {0,0,0},
-        .radius = 1, 
-        .mass = 0.75
-    });
-    planets.push_back({ 
-        .name = "Right eye",
-        .position = {-2.5,2.5,-7.5},
-        .color = {0,0,0},
-        .radius = 1, 
-        .mass = 0.75
-    });
-
-    std::ofstream outFile("universe.txt");
-    if(outFile.is_open()){
-        outFile << planets.size() << std::endl;
-        for(auto& p : planets){
-            outFile << serialize(p) << std::endl;
-        }
-    }
-    */
+    deserializeAll(UNIVERSE, &(raytracer.camera), &planets);
 
     std::vector<PlanetGLSL> converted = planetsToGLSL(&planets);
     glBufferData(GL_SHADER_STORAGE_BUFFER, converted.size() * sizeof(struct PlanetGLSL), converted.data(), GL_STATIC_READ);
@@ -210,23 +196,27 @@ int main(){
 
         //---Renderer---
         Settings* settings = ui.getSettings();
-        if(ui.shouldDispatchFlag()){
+        if(ui.dispatch.getState()){
             int w = settings->resolution[0];
             int h = settings->resolution[1];
             raytracer.update(w, h);
             raytracer.dispatch(w, h);
-            ui.clearDispatchFlag();
+            ui.dispatch.clear();
         }
 
-        if(ui.shouldUpdateUniverseFlag()){
+        if(ui.updateUniverse.getState()){
             std::vector<PlanetGLSL> converted = planetsToGLSL(&planets);
             glBindBuffer(GL_SHADER_STORAGE_BUFFER, transmissionBuffer);
             glBufferData(GL_SHADER_STORAGE_BUFFER, converted.size() * sizeof(struct PlanetGLSL), converted.data(), GL_STATIC_READ);
-            ui.clearUpdateUniverseFlag();
+            ui.updateUniverse.clear();
         }
 
+        if(ui.saveUniverse.getState()){
+            serializeAll(UNIVERSE, &(raytracer.camera), &planets);
+        }
+    
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-        if(ui.shouldExportFlag()){
+        if(ui.exportImage.getState()){
             //Get string of file to save to (autogenerated)
             std::ostringstream filename;
             auto t = std::time(nullptr);
@@ -239,7 +229,7 @@ int main(){
             glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, &output[0]);
             stbi_write_png(filename.str().c_str(), w, h, 3, output.data(), w * 3);
             std::cout << "Saved to " << filename.str() << std::endl;
-            ui.clearExportFlag();
+            ui.exportImage.clear();
         }
 
         //---From compute shader output to framebuffer---

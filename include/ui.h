@@ -9,6 +9,9 @@
 #include "settings.h"
 #include "planet.h"
 #include "camera.h"
+#include "flag.h"
+
+#define BUF_SIZE 512
 
 class UI {
 public:
@@ -19,16 +22,14 @@ public:
     void end();
     Settings* getSettings();
     //Flags: set by the ui, cleared by the outside
-    bool shouldDispatchFlag();
-    void clearDispatchFlag();
-    bool shouldUpdateUniverseFlag();
-    void clearUpdateUniverseFlag();
-    bool shouldExportFlag();
-    void clearExportFlag();
+    Flag dispatch = Flag(true);
+    Flag updateUniverse;
+    Flag saveUniverse;
+    Flag dirtyUniverse;
+    Flag exportImage;
 private:
     Settings active;
     int dirtyResolution[2] = {DEFAULT_WIDTH, DEFAULT_HEIGHT};
-    bool shouldDispatch = true;
-    bool shouldUpdateUniverse = false;
-    bool shouldExportToFile = false;
+    char newName[BUF_SIZE] = {0};
 };
+

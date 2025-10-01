@@ -23,17 +23,38 @@ void UI::settings(){
     }
     ImGui::Checkbox("Continuous dispatch", &active.alwaysDispatch);
     if(ImGui::Button("Render") || active.alwaysDispatch){
-        shouldDispatch = true;
+        dispatch.set();
     }
     if(ImGui::Button("Save to file")) {
-        shouldExportToFile = true;
+        exportImage.set();
     }
 
     ImGui::End();
 }
 
 void UI::universe(struct Camera *camera, std::vector<Planet>* ref){
-    ImGui::Begin("Universe");
+    ImGuiWindowFlags flag = 0;
+    if(dirtyUniverse.getState()){
+        flag |= ImGuiWindowFlags_UnsavedDocument;
+    }
+    ImGui::Begin("Universe", NULL, flag);
+    ImGui::InputText("Name", newName, BUF_SIZE);
+    ImGui::SameLine();
+    if(ImGui::Button("Add")){
+        ref->push_back({
+            .name = std::string(newName, BUF_SIZE),
+            .position = glm::vec3(0,0,0),
+            .color = glm::vec3(0,0,0),
+            .radius = 1,
+            .mass = 1
+        });
+        dirtyUniverse.set();
+    }
+    if(ImGui::Button("Save to universe.txt")){
+        saveUniverse.set();
+        dirtyUniverse.clear();
+    }
+    ImGui::Separator();
     if(ImGui::TreeNode("Camera")){
         float posArray[3] = {camera->position.x, camera->position.y, camera->position.z};
         float lookArray[3] = {camera->look.x, camera->look.y, camera->look.z};
@@ -46,6 +67,7 @@ void UI::universe(struct Camera *camera, std::vector<Planet>* ref){
             camera->position = glm::vec3(posArray[0], posArray[1], posArray[2]);
             camera->look = glm::vec3(lookArray[0], lookArray[1], lookArray[2]);
             camera->up = glm::vec3(upArray[0], upArray[1], upArray[2]);
+            dirtyUniverse.set();
         }
 
         ImGui::TreePop();
@@ -60,11 +82,18 @@ void UI::universe(struct Camera *camera, std::vector<Planet>* ref){
             modified |= ImGui::ColorEdit3("Color", colorArray);
             modified |= ImGui::InputFloat("Radius (m)", &(p.radius));
             modified |= ImGui::InputFloat("Mass (kg)", &(p.mass));
+
+            if(ImGui::Button("Remove")){
+                ref->erase(ref->begin() + i);
+                dirtyUniverse.set();
+            }
+
             if(modified){
                 p.position = glm::vec3(posArray[0], posArray[1], posArray[2]);
                 p.color = glm::vec3(colorArray[0], colorArray[1], colorArray[2]);
+                updateUniverse.set();
+                dirtyUniverse.set();
             }
-            shouldUpdateUniverse |= modified;
 
             ImGui::TreePop();
         }
@@ -95,27 +124,3 @@ Settings* UI::getSettings(){
     return &active;
 }
 
-//---FLAGS---
-bool UI::shouldDispatchFlag(){
-    return shouldDispatch;
-}
-
-void UI::clearDispatchFlag(){
-    shouldDispatch = 0;
-}
-
-bool UI::shouldUpdateUniverseFlag(){
-    return shouldUpdateUniverse;
-}
-
-void UI::clearUpdateUniverseFlag(){
-    shouldUpdateUniverse = 0;
-}
-
-bool UI::shouldExportFlag(){
-    return shouldExportToFile;
-}
-
-void UI::clearExportFlag(){
-    shouldExportToFile = 0;
-}
