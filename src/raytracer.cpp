@@ -28,10 +28,10 @@ void Raytracer::update(int textureWidth, int textureHeight){
 void Raytracer::dispatch(int x, int y){
     //std::cout << "DISPATCHED" << std::endl;
     glUseProgram(program);
-    glUniform3f(cameraPosId, position.x, position.y, position.z);
-    glUniform3f(lookDirId, look.x, look.y, look.z);
-    glUniform3f(upVectorId, up.x, up.y, up.z);
-    glUniform1f(vFovId, verticalFov);
+    glUniform3f(cameraPosId, camera.position.x, camera.position.y, camera.position.z);
+    glUniform3f(lookDirId, camera.look.x, camera.look.y, camera.look.z);
+    glUniform3f(upVectorId, camera.up.x, camera.up.y, camera.up.z);
+    glUniform1f(vFovId, camera.verticalFOV);
     glDispatchCompute((GLuint)x, (GLuint)y, 1);
 }
 

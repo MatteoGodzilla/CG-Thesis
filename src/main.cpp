@@ -259,7 +259,7 @@ int main(){
         ui.begin();
         //ImGui::ShowDemoWindow(); 
         ui.settings();
-        ui.universe(&planets);
+        ui.universe(&(raytracer.camera), &planets);
         ui.viewport(framebuffer.getColorTexture());
         ui.end();
 

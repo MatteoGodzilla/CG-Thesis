@@ -8,13 +8,14 @@
 //Project
 #include "settings.h"
 #include "planet.h"
+#include "camera.h"
 
 class UI {
 public:
     void begin();
     void settings();
     void viewport(GLuint framebufferTexture);
-    void universe(std::vector<Planet>* ref);
+    void universe(struct Camera *camera, std::vector<Planet>* ref);
     void end();
     Settings* getSettings();
     //Flags: set by the ui, cleared by the outside

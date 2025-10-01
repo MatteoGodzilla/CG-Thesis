@@ -32,8 +32,24 @@ void UI::settings(){
     ImGui::End();
 }
 
-void UI::universe(std::vector<Planet>* ref){
+void UI::universe(struct Camera *camera, std::vector<Planet>* ref){
     ImGui::Begin("Universe");
+    if(ImGui::TreeNode("Camera")){
+        float posArray[3] = {camera->position.x, camera->position.y, camera->position.z};
+        float lookArray[3] = {camera->look.x, camera->look.y, camera->look.z};
+        float upArray[3] = {camera->up.x, camera->up.y, camera->up.z};
+        bool modified = false;
+        modified |= ImGui::DragFloat3("Position",posArray);
+        modified |= ImGui::DragFloat3("Look",lookArray);
+        modified |= ImGui::DragFloat3("Up",upArray);
+        if(modified){
+            camera->position = glm::vec3(posArray[0], posArray[1], posArray[2]);
+            camera->look = glm::vec3(lookArray[0], lookArray[1], lookArray[2]);
+            camera->up = glm::vec3(upArray[0], upArray[1], upArray[2]);
+        }
+
+        ImGui::TreePop();
+    }
     for(size_t i = 0; i < ref->size(); i++){
         Planet& p = ref->at(i);
         if(ImGui::TreeNode(p.name.c_str())){
@@ -44,13 +60,10 @@ void UI::universe(std::vector<Planet>* ref){
             modified |= ImGui::ColorEdit3("Color", colorArray);
             modified |= ImGui::InputFloat("Radius (m)", &(p.radius));
             modified |= ImGui::InputFloat("Mass (kg)", &(p.mass));
-            p.position.x = posArray[0];
-            p.position.y = posArray[1];
-            p.position.z = posArray[2];
-            p.color.x = colorArray[0];
-            p.color.y = colorArray[1];
-            p.color.z = colorArray[2];
-
+            if(modified){
+                p.position = glm::vec3(posArray[0], posArray[1], posArray[2]);
+                p.color = glm::vec3(colorArray[0], colorArray[1], colorArray[2]);
+            }
             shouldUpdateUniverse |= modified;
 
             ImGui::TreePop();

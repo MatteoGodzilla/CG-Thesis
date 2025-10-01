@@ -2,6 +2,7 @@
 #include <iostream>
 #include "glm/vec3.hpp"
 #include "shader.h"
+#include "camera.h"
 
 class Raytracer {
 public:
@@ -9,6 +10,13 @@ public:
     void update(int textureWidth, int textureHeight);
     void dispatch(int x, int y);
     GLuint getOutputTexture();
+    //actual camera values
+    struct Camera camera = {
+        .position = {5,0,-5},
+        .look = {-1,0,0},
+        .up = {0,1,0},
+        .verticalFOV = 10
+    };
 private: 
     GLuint textureOutput;
     GLuint program;
@@ -17,9 +25,4 @@ private:
     GLuint lookDirId;
     GLuint upVectorId;
     GLuint vFovId;
-    //actual camera values
-    glm::vec3 position = {0,0,-5};
-    glm::vec3 look = {-1,0,0};
-    glm::vec3 up = {0,1,0};
-    float verticalFov = 10;
 };
