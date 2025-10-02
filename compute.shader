@@ -84,19 +84,22 @@ vec3 background(vec3 point, Plane backPlane){
     float planeY = dot(K, planeUp) / length(planeUp);
     float resX = abs(planeX - floor(planeX)); //[0,1)
     float resY = abs(planeY - floor(planeY)); //[0,1)
+
     const float gridSize = 0.1;
     vec3 result = vec3(0, 0.2, 0.2);
     if(resX < gridSize || resY < gridSize){
         result = vec3(0,0,0);
     }
     return result;
-    
     //return vec3(resX, resY, 0);
 }
 
 Ray bendRay(Ray original, Planet p, vec3 closestPoint){
+    const float c = 299792458.0; 
+    const float G = 6.67430e-11;
     float impactRadius = length(closestPoint - p.position);
-    float alpha = p.mass / (50 * impactRadius);
+    //float alpha = 4 * G * p.mass / (c * c * impactRadius);
+    float alpha = p.mass / impactRadius;
     float deviation = length(original.dir) * tan(alpha);
     vec3 towardsCenter = p.position - closestPoint;
     vec3 newDir = normalize(original.dir + towardsCenter * deviation);
@@ -150,6 +153,13 @@ void main(){
                 planetIndex = i;
                 closestHit = t;
             } else if(t < 0){
+                Plane planetLens = Plane(data[i].position, -lookDir); 
+                float impactT = RayPlaneIntersection(worldRay, planetLens);
+                if(impactT > 0 && impactT < closestMissT){
+                    closestMissedPlanet = i;
+                    closestMissT = impactT;
+                }
+                /*
                 //We didn't hit a planet by definition
                 // Check if the ray should be bent or go straight to the background
                 float isInFront = dot(worldRay.dir, data[i].position - worldRay.pos);
@@ -161,6 +171,7 @@ void main(){
                         closestMissT = impactT;
                     }
                 }
+                */
             }
         }
         if(closestMissedPlanet >= 0){
@@ -168,11 +179,13 @@ void main(){
             vec3 closestPoint = rayPoint(worldRay, closestMissT);
             worldRay = bendRay(worldRay, data[closestMissedPlanet], closestPoint);
             bounces++;
-        } 
+        } else {
+            break;
+        }
     }
 
     if(hitPlanet){
-        pixel.rgb = data[planetIndex].color;
+        pixel.rgb = data[planetIndex].color * (1 - float(bounces) / 10);
     } else {
         //we assume the ray has gone into the background
       
