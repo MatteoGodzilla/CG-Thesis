@@ -9,6 +9,8 @@ Raytracer::Raytracer(){
     lookDirId = glGetUniformLocation(program, "lookDir");
     upVectorId = glGetUniformLocation(program, "upVector");
     vFovId = glGetUniformLocation(program, "vFov");
+    gridSizeId = glGetUniformLocation(program, "gridSize");
+    backgroundDistanceId = glGetUniformLocation(program, "backgroundDistance");
     glGenTextures(1, &textureOutput);
     glBindTexture(GL_TEXTURE_2D, textureOutput);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -32,6 +34,8 @@ void Raytracer::dispatch(int x, int y){
     glUniform3f(lookDirId, camera.look.x, camera.look.y, camera.look.z);
     glUniform3f(upVectorId, camera.up.x, camera.up.y, camera.up.z);
     glUniform1f(vFovId, camera.verticalFOV);
+    glUniform2f(gridSizeId, background.gridSize.x, background.gridSize.y);
+    glUniform1f(backgroundDistanceId, background.distance);
     glDispatchCompute((GLuint)x, (GLuint)y, 1);
 }
 

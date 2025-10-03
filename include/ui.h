@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <glad/glad.h>
+#include "glm/vec2.hpp"
 //Imgui
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -10,6 +11,7 @@
 #include "planet.h"
 #include "camera.h"
 #include "flag.h"
+#include "background.h"
 
 #define BUF_SIZE 512
 
@@ -18,7 +20,7 @@ public:
     void begin();
     void settings();
     void viewport(GLuint framebufferTexture);
-    void universe(struct Camera *camera, std::vector<Planet>* ref);
+    void universe(Camera *camera, Background* background, std::vector<Planet>* ref);
     void end();
     Settings* getSettings();
     //Flags: set by the ui, cleared by the outside

@@ -29,6 +29,8 @@ uniform vec3 cameraPos;
 uniform vec3 lookDir;
 uniform vec3 upVector;
 uniform float vFov;
+uniform vec2 gridSize;
+uniform float backgroundDistance;
 
 //Orthographic projection
 Ray viewportToWorldRay(vec2 viewNorm){
@@ -82,12 +84,12 @@ vec3 background(vec3 point, Plane backPlane){
     vec3 K = point - backPlane.origin;
     float planeX = dot(K, planeRight) / length(planeRight);
     float planeY = dot(K, planeUp) / length(planeUp);
-    float resX = abs(planeX - floor(planeX)); //[0,1)
-    float resY = abs(planeY - floor(planeY)); //[0,1)
+    float resX = mod(planeX, gridSize.x) / gridSize.x;
+    float resY = mod(planeY, gridSize.y) / gridSize.y;
 
-    const float gridSize = 0.1;
+    const float gridThickness = 0.1;
     vec3 result = vec3(0, 0.2, 0.2);
-    if(resX < gridSize || resY < gridSize){
+    if(resX < gridThickness || resY < gridThickness){
         result = vec3(0,0,0);
     }
     return result;
@@ -95,11 +97,11 @@ vec3 background(vec3 point, Plane backPlane){
 }
 
 Ray bendRay(Ray original, Planet p, vec3 closestPoint){
-    const float c = 299792458.0; 
+    const float C = 299792458.0; 
     const float G = 6.67430e-11;
     float impactRadius = length(closestPoint - p.position);
-    //float alpha = 4 * G * p.mass / (c * c * impactRadius);
-    float alpha = p.mass / impactRadius;
+    float alpha = 4 * G * p.mass / (C * C * impactRadius);
+    //float alpha = p.mass / impactRadius;
     float deviation = length(original.dir) * tan(alpha);
     vec3 towardsCenter = p.position - closestPoint;
     vec3 newDir = normalize(original.dir + towardsCenter * deviation);
@@ -135,7 +137,7 @@ void main(){
    
     bool hitPlanet = false;
     int planetIndex = -1;
-    Plane backPlane = Plane(cameraPos + lookDir * 100, -lookDir);
+    Plane backPlane = Plane(cameraPos + lookDir * backgroundDistance, -lookDir);
     int closestMissedPlanet = -1;
     int j;
     int bounces = 0;
@@ -197,7 +199,7 @@ void main(){
         
         //pixel.rgb = vec3(1,1,1) * float(bounces) / 10;
         
-        //pixel.rgb = worldRay.pos ;
+        //pixel.rgb = abs(worldRay.dir);
     } /*else {
         //pixel.rgb = vec3(1,1,1) * float(j) / 10;
         pixel.rgb = worldRay.dir + vec3(0.5, 0.5, 0.5);

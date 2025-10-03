@@ -4,3 +4,9 @@
 [submodule "glm"]
 	path = glm
 	url = https://github.com/g-truc/glm.git
+[submodule "program_options"]
+	path = program_options
+	url = https://github.com/boostorg/program_options.git
+[submodule "cxxopts"]
+	path = cxxopts
+	url = https://github.com/jarro2783/cxxopts.git

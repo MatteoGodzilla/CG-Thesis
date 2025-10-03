@@ -32,7 +32,7 @@ void UI::settings(){
     ImGui::End();
 }
 
-void UI::universe(struct Camera *camera, std::vector<Planet>* ref){
+void UI::universe(Camera *camera, Background* background, std::vector<Planet>* ref){
     ImGuiWindowFlags flag = 0;
     if(dirtyUniverse.getState()){
         flag |= ImGuiWindowFlags_UnsavedDocument;
@@ -60,9 +60,10 @@ void UI::universe(struct Camera *camera, std::vector<Planet>* ref){
         float lookArray[3] = {camera->look.x, camera->look.y, camera->look.z};
         float upArray[3] = {camera->up.x, camera->up.y, camera->up.z};
         bool modified = false;
-        modified |= ImGui::DragFloat3("Position",posArray);
+        modified |= ImGui::DragFloat3("Position (m)",posArray, 1.0f, 0.0f, 0.0f, "%.3e");
         modified |= ImGui::DragFloat3("Look",lookArray);
         modified |= ImGui::DragFloat3("Up",upArray);
+        modified |= ImGui::DragFloat("Vertical FOV (m)", &(camera->verticalFOV), 1.0f, 0.0f, 0.0f, "%.3e");
         if(modified){
             camera->position = glm::vec3(posArray[0], posArray[1], posArray[2]);
             camera->look = glm::vec3(lookArray[0], lookArray[1], lookArray[2]);
@@ -72,16 +73,27 @@ void UI::universe(struct Camera *camera, std::vector<Planet>* ref){
 
         ImGui::TreePop();
     }
+    if(ImGui::TreeNode("Background")){
+        bool modified = false;
+        float gridArray[2] = {background->gridSize.x, background->gridSize.y};
+        modified |= ImGui::DragFloat2("Grid Size (m)", gridArray, 1.0f, 0.0f, 0.0f, "%.3e");
+        modified |= ImGui::DragFloat("Distance (m)", &(background->distance), 1.0f, 0.0f, 0.0f, "%.3e");
+        if(modified){
+            background->gridSize = glm::vec2(gridArray[0], gridArray[1]);
+            dirtyUniverse.set();
+        }
+        ImGui::TreePop();
+    }
     for(size_t i = 0; i < ref->size(); i++){
         Planet& p = ref->at(i);
         if(ImGui::TreeNode(p.name.c_str())){
             float posArray[3] = {p.position.x, p.position.y, p.position.z};
             float colorArray[3] = {p.color.x, p.color.y, p.color.z};
             bool modified = false;
-            modified |= ImGui::DragFloat3("Position", posArray);
+            modified |= ImGui::DragFloat3("Position (m)", posArray, 1.0f, 0.0f, 0.0f, "%.3e");
             modified |= ImGui::ColorEdit3("Color", colorArray);
-            modified |= ImGui::InputFloat("Radius (m)", &(p.radius));
-            modified |= ImGui::InputFloat("Mass (kg)", &(p.mass));
+            modified |= ImGui::InputFloat("Radius (m)", &(p.radius), 1.0f, 0.0f, "%.3e");
+            modified |= ImGui::InputFloat("Mass (kg)", &(p.mass), 1.0f, 0.0f, "%.3e");
 
             if(ImGui::Button("Remove")){
                 ref->erase(ref->begin() + i);
