@@ -7,4 +7,4 @@
 #include "serialization.h"
 #include "raytracer.h"
 
-int mainRenderer(int width, int height, std::string input, std::string output);
+int mainRenderer(int width, int height, std::istream& input, std::string output);

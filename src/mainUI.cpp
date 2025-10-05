@@ -61,7 +61,11 @@ int mainUI(){
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, transmissionBuffer);
 
     std::vector<Planet> planets;
-    deserializeAll(UNIVERSE, &(raytracer.camera), &(raytracer.background), &planets);
+    std::ifstream inputFile(UNIVERSE);
+    if(inputFile.is_open()){
+        deserializeAll(inputFile, &(raytracer.camera), &(raytracer.background), &planets);
+        inputFile.close();
+    }
 
     std::vector<PlanetGLSL> converted = planetsToGLSL(&planets);
     glBufferData(GL_SHADER_STORAGE_BUFFER, converted.size() * sizeof(PlanetGLSL), converted.data(), GL_STATIC_READ);
@@ -94,7 +98,9 @@ int mainUI(){
         }
 
         if(ui.saveUniverse.getState()){
-            serializeAll(UNIVERSE, &(raytracer.camera), &(raytracer.background), &planets);
+            std::ofstream output(UNIVERSE);
+            serializeAll(output, &(raytracer.camera), &(raytracer.background), &planets);
+            output.close();
         }
     
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);

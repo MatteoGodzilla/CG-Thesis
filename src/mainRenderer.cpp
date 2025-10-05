@@ -1,6 +1,6 @@
 #include "mainRenderer.h"
 
-int mainRenderer(int width, int height, std::string input, std::string output){
+int mainRenderer(int width, int height, std::istream& input, std::string output){
     //We cannot use opengl functions without a window
     /* Initialize the library */
     if (!glfwInit())
@@ -34,7 +34,7 @@ int mainRenderer(int width, int height, std::string input, std::string output){
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, transmissionBuffer);
 
     std::vector<Planet> planets;
-    deserializeAll(input.c_str(), &(raytracer.camera), &(raytracer.background), &planets);
+    deserializeAll(input, &(raytracer.camera), &(raytracer.background), &planets);
     //Send planets to gpu
     std::vector<PlanetGLSL> converted = planetsToGLSL(&planets);
     glBufferData(GL_SHADER_STORAGE_BUFFER, converted.size() * sizeof(PlanetGLSL), converted.data(), GL_STATIC_READ);

@@ -94,6 +94,7 @@ vec3 background(vec3 point, Plane backPlane){
     }
     return result;
     //return vec3(resX, resY, 0);
+    //return vec3(0,0,0);
 }
 
 Ray bendRay(Ray original, Planet p, vec3 closestPoint){

@@ -6,5 +6,5 @@
 #include "camera.h"
 #include "background.h"
 
-void deserializeAll(const char* filename, Camera* camera, Background* background, std::vector<Planet>* ref);
-void serializeAll(const char* filename, Camera* camera, Background* background, std::vector<Planet>* ref);
+void deserializeAll(std::istream& input, Camera* camera, Background* background, std::vector<Planet>* ref);
+void serializeAll(std::ostream& output, Camera* camera, Background* background, std::vector<Planet>* ref);

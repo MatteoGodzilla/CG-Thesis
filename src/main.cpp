@@ -30,7 +30,6 @@ int main(int argc, char** argv){
         //Setup render
         int width;
         int height;
-        std::string input;
         std::string output;
         if(result.count("w") == 0){
             std::cerr << "Did not specify width" << std::endl;
@@ -46,17 +45,24 @@ int main(int argc, char** argv){
         }
         height = result["h"].as<int>();
 
-        if(result.count("i") == 1){
-            input = result["i"].as<std::string>();
-        } else {
-            input = "stdin";
-        }
 
         if(result.count("o") == 1){
             output = result["o"].as<std::string>();
         } else {
             output = "output.png";
         }
-        return mainRenderer(width, height, input, output);
+
+        if(result.count("i") == 1){
+            std::ifstream input = std::ifstream(result["i"].as<std::string>());
+            if(!input.is_open()){
+                std::cerr << "COULD NOT OPEN FILE" << std::endl;
+                return 1;
+            }
+            int ret = mainRenderer(width, height, input, output);
+            input.close();
+            return ret;
+        } else {
+            return mainRenderer(width, height, std::cin, output);
+        }
     }
 }
