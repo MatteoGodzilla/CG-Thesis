@@ -7,16 +7,20 @@
 
 int main(int argc, char** argv){
     cxxopts::Options options(argv[0], "Raytracer renderer for visualizing gravitational lensing");
-    options.custom_help("[Mode] [Render]");
+    options.custom_help("[Mode] [Input options] [Mode Options]");
     options.add_options("Mode")
         ("g,gui", "Show GUI editor (default)", cxxopts::value<bool>())
         ("r,render", "Render PNG image directly", cxxopts::value<bool>()->default_value("false"))
     ;
-    options.add_options("Render")
+    options.add_options("Input options")
+        ("i", "Universe input file", cxxopts::value<std::string>()->default_value(UNIVERSE))
+        ("stdin", "Load input file from standard input", cxxopts::value<bool>()->default_value("false"))
+    ;
+
+    options.add_options("Render mode options")
         ("w", "Render width", cxxopts::value<int>())
         ("h", "Render height", cxxopts::value<int>())
-        ("i", "Input file (default: stdin)", cxxopts::value<std::string>())
-        ("o", "Output png file (default: 'output.png')", cxxopts::value<std::string>())
+        ("o", "Output png file", cxxopts::value<std::string>()->default_value("output.png"))
     ;
     options.allow_unrecognised_options();
    
@@ -25,6 +29,7 @@ int main(int argc, char** argv){
     if(result.unmatched().size() > 0){
         std::cout << options.help() << std::endl;
     } else if(argc == 1 || result["gui"].as<bool>()){
+        //TODO: handle input specified by command
         return mainUI();
     } else if(result["render"].as<bool>()){
         //Setup render
@@ -51,8 +56,11 @@ int main(int argc, char** argv){
         } else {
             output = "output.png";
         }
-
-        if(result.count("i") == 1){
+       
+        if(result.count("stdin") == 1){
+            return mainRenderer(width, height, std::cin, output);
+        } else {
+            //Attempt to load from file (default behaviour)
             std::ifstream input = std::ifstream(result["i"].as<std::string>());
             if(!input.is_open()){
                 std::cerr << "COULD NOT OPEN FILE" << std::endl;
@@ -61,8 +69,6 @@ int main(int argc, char** argv){
             int ret = mainRenderer(width, height, input, output);
             input.close();
             return ret;
-        } else {
-            return mainRenderer(width, height, std::cin, output);
         }
     }
 }
