@@ -9,8 +9,8 @@ void UI::begin(){
 
 void UI::settings(){
     ImGui::Begin("Settings");
-
-    ImGui::DragInt2("Render resolution", dirtyResolution);
+    
+    ImGui::DragInt2("Resolution", dirtyResolution);
     if(ImGui::Button("Apply resolution")){
         active.resolution[0] = dirtyResolution[0];
         active.resolution[1] = dirtyResolution[1];

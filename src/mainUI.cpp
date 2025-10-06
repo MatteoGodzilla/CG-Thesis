@@ -16,7 +16,7 @@ int mainUI(){
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     /* Create a windowed mode window and its OpenGL context */
-    GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Tesi OpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "CG-Thesis", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -41,6 +41,10 @@ int mainUI(){
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init();
+
+    if (!std::filesystem::exists("imgui.ini")) {
+        ImGui::LoadIniSettingsFromDisk("imgui_default.ini");
+    }
 
     UI ui;
     Raytracer raytracer;
