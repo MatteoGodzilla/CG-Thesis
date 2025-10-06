@@ -8,7 +8,7 @@ void GLAPIENTRY MessageCallback( GLenum source, GLenum type, GLuint id, GLenum s
     }
 }
 
-int mainUI(){
+int mainUI(std::istream& input){
     /* Initialize the library */
     if (!glfwInit())
         return 1;
@@ -59,11 +59,7 @@ int mainUI(){
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, transmissionBuffer);
 
     std::vector<Planet> planets;
-    std::ifstream inputFile(UNIVERSE);
-    if(inputFile.is_open()){
-        deserializeAll(inputFile, &(raytracer.camera), &(raytracer.background), &planets);
-        inputFile.close();
-    }
+    deserializeAll(input, &(raytracer.camera), &(raytracer.background), &planets);
 
     std::vector<PlanetGLSL> converted = planetsToGLSL(&planets);
     glBufferData(GL_SHADER_STORAGE_BUFFER, converted.size() * sizeof(PlanetGLSL), converted.data(), GL_STATIC_READ);

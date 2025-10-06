@@ -1,5 +1,6 @@
 #pragma once
 //System
+#include <iostream>
 #include <iomanip> 
 #include <filesystem>
 //External
@@ -20,4 +21,4 @@
 #define WINDOW_HEIGHT 720
 #define UNIVERSE "universe.txt"
 
-int mainUI();
+int mainUI(std::istream& input);

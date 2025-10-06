@@ -9,7 +9,7 @@ int main(int argc, char** argv){
     cxxopts::Options options(argv[0], "Raytracer renderer for visualizing gravitational lensing");
     options.custom_help("[Mode] [Input options] [Mode Options]");
     options.add_options("Mode")
-        ("g,gui", "Show GUI editor (default)", cxxopts::value<bool>())
+        ("g,gui", "Show GUI editor (default)", cxxopts::value<bool>()->default_value("true"))
         ("r,render", "Render PNG image directly", cxxopts::value<bool>()->default_value("false"))
     ;
     options.add_options("Input options")
@@ -29,8 +29,19 @@ int main(int argc, char** argv){
     if(result.unmatched().size() > 0){
         std::cout << options.help() << std::endl;
     } else if(argc == 1 || result["gui"].as<bool>()){
-        //TODO: handle input specified by command
-        return mainUI();
+        if(result.count("stdin") == 1){
+            return mainUI(std::cin);
+        } else {
+            //Attempt to load from file (default behaviour)
+            std::ifstream input = std::ifstream(result["i"].as<std::string>());
+            if(!input.is_open()){
+                std::cerr << "COULD NOT OPEN FILE" << std::endl;
+                return 1;
+            }
+            int ret = mainUI(input);
+            input.close();
+            return ret;
+        }
     } else if(result["render"].as<bool>()){
         //Setup render
         int width;
