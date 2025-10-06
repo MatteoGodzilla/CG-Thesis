@@ -79,6 +79,7 @@ vec3 rayPoint(Ray ray, float t){
 }
 
 vec3 background(vec3 point, Plane backPlane){
+    /*
     vec3 planeUp = upVector; 
     vec3 planeRight = cross(upVector, backPlane.normal);
     vec3 K = point - backPlane.origin;
@@ -94,7 +95,8 @@ vec3 background(vec3 point, Plane backPlane){
     }
     return result;
     //return vec3(resX, resY, 0);
-    //return vec3(0,0,0);
+    */
+    return vec3(0,0,0);
 }
 
 Ray bendRay(Ray original, Planet p, vec3 closestPoint){

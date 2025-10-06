@@ -11,12 +11,16 @@ Raytracer::Raytracer(){
     vFovId = glGetUniformLocation(program, "vFov");
     gridSizeId = glGetUniformLocation(program, "gridSize");
     backgroundDistanceId = glGetUniformLocation(program, "backgroundDistance");
+
     glGenTextures(1, &textureOutput);
     glBindTexture(GL_TEXTURE_2D, textureOutput);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &workGroupMax[0]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &workGroupMax[1]);
 }
 
 void Raytracer::update(int textureWidth, int textureHeight){
@@ -36,7 +40,7 @@ void Raytracer::dispatch(int x, int y){
     glUniform1f(vFovId, camera.verticalFOV);
     glUniform2f(gridSizeId, background.gridSize.x, background.gridSize.y);
     glUniform1f(backgroundDistanceId, background.distance);
-    glDispatchCompute((GLuint)x, (GLuint)y, 1);
+    glDispatchCompute(std::min(x, workGroupMax[0]), std::min(y, workGroupMax[1]), 1);
 }
 
 GLuint Raytracer::getOutputTexture(){

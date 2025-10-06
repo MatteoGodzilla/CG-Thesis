@@ -49,12 +49,6 @@ int mainUI(){
 
     Viewport viewport;
 
-    //Get maximum work group count
-    int workGroupMax[3];
-    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &workGroupMax[0]);
-    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &workGroupMax[1]);
-    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &workGroupMax[2]);
-
     //Buffer
     GLuint transmissionBuffer;
     glGenBuffers(1, &transmissionBuffer);

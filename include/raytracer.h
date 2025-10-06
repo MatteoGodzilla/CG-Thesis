@@ -34,4 +34,5 @@ private:
     GLuint vFovId;
     GLuint gridSizeId;
     GLuint backgroundDistanceId;
+    int workGroupMax[2] = {0,0};
 };
