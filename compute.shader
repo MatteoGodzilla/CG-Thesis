@@ -1,8 +1,5 @@
 #version 430 core
 
-layout(local_size_x = 1, local_size_y = 1) in;
-layout(rgba32f, binding = 0) writeonly restrict uniform image2D texOutput;
-
 struct Planet {
     vec3 position;
     vec3 color;
@@ -20,7 +17,10 @@ struct Plane {
     vec3 normal;
 };
 
-layout(std430, binding = 1) readonly buffer transmissionBuffer {
+layout(local_size_x = 1, local_size_y = 1) in;
+layout(rgba32f, binding = 0) writeonly restrict uniform image2D texOutput;
+layout(rgba32f, binding = 1) writeonly restrict uniform image2D debugOutput;
+layout(std430, binding = 2) readonly buffer transmissionBuffer {
     Planet data[];
 };
 
@@ -130,6 +130,7 @@ float getClosestT(vec2 tVals){
 
 void main(){
     vec4 pixel = vec4(0,0,0,0);
+    vec4 debug = vec4(-1,0,0,0);
     ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
     vec2 pixelCoordsNorm = vec2(0,0);
 
@@ -168,7 +169,7 @@ void main(){
                 //We didn't hit a planet by definition
                 // Check if the ray should be bent or go straight to the background
                 float isInFront = dot(worldRay.dir, data[i].position - worldRay.pos);
-                if(isInFront > 0.5){
+                if(isInFront > 0.5){compute
                     float impactT = RaySphereClosestPoint(worldRay, data[i]);
                     if(impactT > 0 && impactT < closestMissT){
                         //We should bend the ray 
@@ -191,6 +192,7 @@ void main(){
 
     if(hitPlanet){
         pixel.rgb = data[planetIndex].color * (1 - float(bounces) / 10);
+        debug.r = planetIndex;
     } else {
         //we assume the ray has gone into the background
       
@@ -203,104 +205,10 @@ void main(){
         //pixel.rgb = vec3(1,1,1) * float(bounces) / 10;
         
         //pixel.rgb = abs(worldRay.dir);
-    } /*else {
-        //pixel.rgb = vec3(1,1,1) * float(j) / 10;
-        pixel.rgb = worldRay.dir + vec3(0.5, 0.5, 0.5);
-    }
-    */
-
-    /*
-    vec2 intersection = RaySphereIntersection(worldRay, data[0]);
-    pixel.rg = intersection;
-    */
-
-    /*
-    vec3 planetColor = data[0].color;
-    float maxT = 999999999.9;
-    float closestPlanetT = 999999999.9;
-    closestPlanetT = RaySphereIntersection(worldRay, data[0]);
-    /*
-    for(int i = 0; i < 1; i++){
-        float t = RaySphereIntersection(worldRay, data[i]);
-        closestPlanetT = t;
-        planetColor = data[i].color;
-        if(t < closestPlanetT){
-            hitPlanet = true;
-            planetIndex = i;
-            closestPlanetT = t;
-            planetColor = data[i].color;
-        }
-    }
-    */
-    /*
-    if(closestPlanetT > 0){
-        pixel.rgb = planetColor;
-    } else {
-        pixel.rgb = vec3(0, 0.2, 0.2);
-    }
-    */
-    
-
-    //Stop conditions:
-    // Hit of a planet
-    // Hit of the back plane
-    // Number of deflections
-
-    /*
-    bool hitPlanet = false;
-    int planetIndex = 0;
-    vec3 planetColor = vec3(0,0,0);
-    bool hitBackground = false;
-    /*
-    for(int j = 0; !hitPlanet && !hitBackground && j < 10; j++){
-        //
-    }
-    */
-
-    /*
-    if(hitPlanet){
-        pixel.rgb = data[planetIndex].color;
-    } else if(hitBackground){
-        //
-        pixel.rgb = vec3(0, 0.2, 0.2); 
-    } else {
-        pixel.rgb = vec3(1, 0, 1);
-    }
-    */
-
-    /*
-    float closestDistance2 = 9999999999.9;
-    int closestPlanetI = -1;
-    vec3 closestPoint = vec3(0,0,0);
-    for(int i = 0; i < data.length(); i++){
-        float t = RaySphereClosestPoint(worldRay, data[i]);
-        vec3 P = rayPoint(worldRay, t);
-        vec3 K = P - data[i].position;
-        if(t >= 0 && dot(K,K) < closestDistance2){
-            closestDistance2 = dot(K,K);
-            closestPlanetI = i; 
-            closestPoint = P;
-        }
-    }
-
-    float radius2 = data[closestPlanetI].radius * data[closestPlanetI].radius;
-    if(closestDistance2 < radius2){
-        //We have an intersection
-        pixel.rgb = data[closestPlanetI].color;
-    } else {
-        Plane backPlane = Plane(cameraPos + lookDir * 100, -lookDir);
-        //We have missed the planet -> draw atmosphere
-        vec3 atmosphere = vec3(1,1,1) - data[closestPlanetI].color;
-        float delta = closestDistance2 - radius2;
-        Ray bent = bendRay(worldRay, data[closestPlanetI], closestPoint);
-
-        float backT = RayPlaneIntersection(bent, backPlane);
-        vec3 backPoint = rayPoint(bent, backT);
-        vec3 backgroundColor = background(backPoint, backPlane);
-        //pixel.rgb = mix(backgroundColor, atmosphere, clamp((1 - delta / 50),0,1));
-        pixel.rgb = backgroundColor;
-    }
-    */
+    } 
+    //debug.rgb = vec3(1,1,1) * float(bounces) / 10;
+    debug.g = bounces;
     
     imageStore(texOutput, pixelCoords, pixel);
+    imageStore(debugOutput, pixelCoords, debug);
 }

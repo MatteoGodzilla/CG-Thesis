@@ -113,15 +113,32 @@ void UI::universe(Camera *camera, Background* background, std::vector<Planet>* r
     ImGui::End();
 }
 
-void UI::viewport(GLuint framebufferTexture){
+void UI::viewport(GLuint framebufferTexture, GLuint computeTexture, std::vector<Planet>* ref){
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0,0));
     ImGui::Begin("ViewPort");
+
+    ImGuiIO& io = ImGui::GetIO();
+    ImVec2 mouse = io.MousePos;
 
     ImVec2 availableSpace = ImGui::GetContentRegionAvail();
     active.viewportSize[0] = availableSpace.x;
     active.viewportSize[1] = availableSpace.y;
 
+    ImVec2 imagePos = ImGui::GetCursorScreenPos();
+    ImVec2 offset = ImVec2(mouse.x - imagePos.x, mouse.y - imagePos.y);
+
     ImGui::Image((ImTextureID)framebufferTexture, availableSpace);
+    if(ImGui::IsItemHovered() && offset.x >= 0 && offset.y >= 0 && offset.x < active.resolution[0] && offset.y < active.resolution[1]) {
+        float pixel[4] = {0};
+        glGetTextureSubImage(computeTexture, 0, offset.x, offset.y, 0, 1, 1, 1, GL_RGBA, GL_FLOAT, 4 * sizeof(GL_FLOAT), &pixel); 
+        int planetIndex = static_cast<int>(pixel[0]);
+        int bounces = static_cast<int>(pixel[1]);
+        if(planetIndex >= 0){
+            ImGui::BeginTooltip();
+            ImGui::Text(" %s\n Bounces: %d", ref->at(planetIndex).name.c_str(), bounces);
+            ImGui::EndTooltip();
+        }
+    }
 
     ImGui::End();
     ImGui::PopStyleVar();

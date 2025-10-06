@@ -12,6 +12,7 @@ public:
     void update(int textureWidth, int textureHeight);
     void dispatch(int x, int y);
     GLuint getOutputTexture();
+    GLuint getDebugTexture();
     //actual camera values
     Camera camera = {
         .position = {5,0,-5},
@@ -26,6 +27,7 @@ public:
     };
 private: 
     GLuint textureOutput;
+    GLuint debugOutput;
     GLuint program;
     GLuint viewportSizeId;
     GLuint cameraPosId;

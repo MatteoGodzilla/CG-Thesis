@@ -18,7 +18,17 @@ void main(){
         outputColor = vec4(0,0,0,1);
     }
     */
+
+    //Pixel perfect scaler (top left)
+    vec2 pixel = uv * viewportSize;
+    if( pixel.x >= 0 && pixel.x < raytracerOutputSize.x && pixel.y >= 0 && pixel.y < raytracerOutputSize.y) {
+        outputColor = texture(raytracerOutput, pixel / raytracerOutputSize);
+    } else {
+        outputColor = vec4(0,0,0,1);
+    }
+
     //Fit output into screen
+    /*
     float outputRatio = raytracerOutputSize.x / raytracerOutputSize.y;
     float width = min(viewportSize.x, viewportSize.y * outputRatio);    
     float height = min(viewportSize.y, viewportSize.x / outputRatio);    
@@ -33,4 +43,5 @@ void main(){
     } else {
         outputColor = texture(raytracerOutput, uvCopy);
     }
+    */
 }

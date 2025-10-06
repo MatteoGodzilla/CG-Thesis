@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <iostream>
 #include <glad/glad.h>
 #include "glm/vec2.hpp"
 //Imgui
@@ -19,7 +20,7 @@ class UI {
 public:
     void begin();
     void settings();
-    void viewport(GLuint framebufferTexture);
+    void viewport(GLuint framebufferTexture, GLuint computeTexture, std::vector<Planet>* ref);
     void universe(Camera *camera, Background* background, std::vector<Planet>* ref);
     void end();
     Settings* getSettings();

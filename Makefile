@@ -1,11 +1,11 @@
 FLAGS = -Wall -Wpedantic -g -std=c++20 
-INCLUDE = -Iinclude -Iimgui -Iimgui/backends -Iglm -Icxxopts/include
+INCLUDE = -Iinclude -Iglad/include -Iimgui -Iimgui/backends -Iglm -Icxxopts/include
 LIBS = -lglfw -lOpenGL -lX11
 
-main: src/main.cpp src/glad.c build/renderer build/gui build/imgui 
+main: src/main.cpp glad/src/glad.c build/renderer build/gui build/imgui 
 	mkdir -p build
 	g++ ${FLAGS} -c src/main.cpp ${INCLUDE} -o build/main.o
-	g++ ${FLAGS} -c src/glad.c ${INCLUDE} -o build/glad.o
+	g++ ${FLAGS} -c glad/src/glad.c ${INCLUDE} -o build/glad.o
 	g++ build/*.o ${LIBS} -o main
 
 # Meta target for compiling the renderer by itself

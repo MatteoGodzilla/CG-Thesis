@@ -63,7 +63,7 @@ int mainUI(std::istream& input){
 
     std::vector<PlanetGLSL> converted = planetsToGLSL(&planets);
     glBufferData(GL_SHADER_STORAGE_BUFFER, converted.size() * sizeof(PlanetGLSL), converted.data(), GL_STATIC_READ);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, transmissionBuffer);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, transmissionBuffer);
 
     //Framebuffer
     Framebuffer framebuffer;
@@ -76,9 +76,9 @@ int mainUI(std::istream& input){
 
         //---Renderer---
         Settings* settings = ui.getSettings();
+        int w = settings->resolution[0];
+        int h = settings->resolution[1];
         if(ui.dispatch.getState()){
-            int w = settings->resolution[0];
-            int h = settings->resolution[1];
             raytracer.update(w, h);
             raytracer.dispatch(w, h);
             ui.dispatch.clear();
@@ -104,8 +104,6 @@ int mainUI(std::istream& input){
             auto t = std::time(nullptr);
             filename << std::put_time(std::localtime(&t), "output_%d-%m-%Y_%H-%M-%S.png");
             //Get texture data
-            int w = settings->resolution[0];
-            int h = settings->resolution[1];
             std::vector<unsigned char> output (w * h * 3); //rgb
             glBindTexture(GL_TEXTURE_2D, raytracer.getOutputTexture());
             glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, &output[0]);
@@ -127,7 +125,7 @@ int mainUI(std::istream& input){
         //ImGui::ShowDemoWindow(); 
         ui.settings();
         ui.universe(&(raytracer.camera), &(raytracer.background), &planets);
-        ui.viewport(framebuffer.getColorTexture());
+        ui.viewport(framebuffer.getColorTexture(), raytracer.getDebugTexture(), &planets);
         ui.end();
 
         glfwSwapBuffers(window);
