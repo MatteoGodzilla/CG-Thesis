@@ -7,6 +7,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stb_image_write.h>
+#include <tinyfiledialogs.h>
 //Project
 #include "shader.h"
 #include "ui.h"

@@ -1,5 +1,5 @@
 FLAGS = -Wall -Wpedantic -g -std=c++20
-INCLUDE = -Iinclude -Iglad/include -Iimgui -Iimgui/backends -Iglm -Icxxopts/include
+INCLUDE = -Iinclude -Iglad/include -Iimgui -Iimgui/backends -Iglm -Icxxopts/include -Itinyfiledialogs-code
 LIBS = -lglfw -lOpenGL -lX11
 
 main: src/main.cpp glad/src/glad.c build/renderer build/gui build/imgui 
@@ -16,7 +16,7 @@ build/mainRenderer.o: src/mainRenderer.cpp include/mainRenderer.h
 	g++ ${FLAGS} -c src/mainRenderer.cpp ${INCLUDE} -o build/mainRenderer.o
 
 # Meta target for compiling the gui editor
-build/gui: build/mainUI.o build/shader.o build/ui.o build/raytracer.o build/framebuffer.o build/planet.o build/flag.o build/viewport.o build/serialization.o
+build/gui: build/mainUI.o build/shader.o build/ui.o build/raytracer.o build/framebuffer.o build/planet.o build/flag.o build/viewport.o build/serialization.o build/tinyfiledialogs.o
 	touch build/gui
 
 build/mainUI.o: src/mainUI.cpp include/mainUI.h
@@ -86,6 +86,11 @@ build/imgui_impl_opengl3.o: imgui/backends/imgui_impl_opengl3.cpp
 build/imgui_impl_glfw.o: imgui/backends/imgui_impl_glfw.cpp
 	mkdir -p build
 	g++ ${FLAGS} -c imgui/backends/imgui_impl_glfw.cpp ${INCLUDE} -o build/imgui_impl_glfw.o
+
+# Tinyfiledialogs
+build/tinyfiledialogs.o: tinyfiledialogs-code/tinyfiledialogs.c tinyfiledialogs-code/tinyfiledialogs.h 
+	mkdir -p build
+	g++ ${FLAGS} -c tinyfiledialogs-code/tinyfiledialogs.c ${INCLUDE} -o build/tinyfiledialogs.o
 
 clean: 
 	rm -r build/

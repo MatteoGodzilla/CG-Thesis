@@ -28,9 +28,11 @@ public:
     //Flags: set by the ui, cleared by the outside
     Flag dispatch = Flag(true);
     Flag updateUniverse;
+    Flag loadUniverse;
     Flag saveUniverse;
     Flag dirtyUniverse;
     Flag exportImage;
+    Flag loadCompute;
 private:
     ImVec2 mouseToComputePixel();
     Settings active;

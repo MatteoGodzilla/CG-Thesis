@@ -8,8 +8,9 @@
 
 class Raytracer {
 public:
-    Raytracer();
+    Raytracer(const char* computeShaderFile);
     void update(int textureWidth, int textureHeight);
+    void changeProgram(const char* filename);
     void dispatch(int x, int y);
     GLuint getOutputTexture();
     GLuint getDebugTexture();
@@ -20,7 +21,6 @@ public:
         .up = {0,1,0},
         .verticalFOV = 10
     };
-    //TODO: maybe make a struct instead?
     Background background {
         .gridSize = glm::vec2(1e6, 1e6),
         .distance = 1e6
@@ -28,7 +28,7 @@ public:
 private: 
     GLuint textureOutput;
     GLuint debugOutput;
-    GLuint program;
+    GLuint program = 0;
     GLuint viewportSizeId;
     GLuint cameraPosId;
     GLuint lookDirId;

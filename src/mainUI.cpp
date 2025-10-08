@@ -47,7 +47,7 @@ int mainUI(std::istream& input){
     }
 
     UI ui;
-    Raytracer raytracer;
+    Raytracer raytracer("compute.shader");
     Settings* defaultSettings = ui.getSettings();
     raytracer.update(defaultSettings->resolution[0], defaultSettings->resolution[1]);
 
@@ -69,8 +69,6 @@ int mainUI(std::istream& input){
     Framebuffer framebuffer;
     framebuffer.update(WINDOW_WIDTH, WINDOW_HEIGHT);
 
-    //Uniform stuff for the manual render
-
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
@@ -83,6 +81,21 @@ int mainUI(std::istream& input){
             raytracer.dispatch(w, h);
             ui.dispatch.clear();
         }
+        
+        if(ui.loadUniverse.getState()){
+            const char* f = tinyfd_openFileDialog("Load universe file", UNIVERSE, 0, nullptr, "text file", 0);
+            std::cout << "Trying to open file :" << f << std::endl;
+            if(f != nullptr){
+                std::ifstream newInput(f);
+                if(newInput.is_open()){
+                    planets.clear();
+                    deserializeAll(newInput, &(raytracer.camera), &(raytracer.background), &planets);
+                    ui.updateUniverse.set();
+                    newInput.close();
+                }
+            }
+            ui.loadUniverse.clear();
+        }
 
         if(ui.updateUniverse.getState()){
             std::vector<PlanetGLSL> converted = planetsToGLSL(&planets);
@@ -92,9 +105,15 @@ int mainUI(std::istream& input){
         }
 
         if(ui.saveUniverse.getState()){
-            std::ofstream output(UNIVERSE);
-            serializeAll(output, &(raytracer.camera), &(raytracer.background), &planets);
-            output.close();
+            const char* f = tinyfd_saveFileDialog("Save universe", UNIVERSE, 0, nullptr,nullptr);
+            if(f != nullptr){
+                std::ofstream output(f);
+                if(output.is_open()){
+                    serializeAll(output, &(raytracer.camera), &(raytracer.background), &planets);
+                    output.close();
+                }
+            }
+            ui.saveUniverse.clear();
         }
     
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
@@ -103,13 +122,24 @@ int mainUI(std::istream& input){
             std::ostringstream filename;
             auto t = std::time(nullptr);
             filename << std::put_time(std::localtime(&t), "output_%d-%m-%Y_%H-%M-%S.png");
-            //Get texture data
-            std::vector<unsigned char> output (w * h * 3); //rgb
-            glBindTexture(GL_TEXTURE_2D, raytracer.getOutputTexture());
-            glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, &output[0]);
-            stbi_write_png(filename.str().c_str(), w, h, 3, output.data(), w * 3);
-            std::cout << "Saved to " << filename.str() << std::endl;
+            const char* f = tinyfd_saveFileDialog("Save rendered image", filename.str().c_str(), 0, nullptr,nullptr);
+            if(f != nullptr){
+                //Get texture data
+                std::vector<unsigned char> output (w * h * 3); //rgb
+                glBindTexture(GL_TEXTURE_2D, raytracer.getOutputTexture());
+                glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, &output[0]);
+                stbi_write_png(f, w, h, 3, output.data(), w * 3);
+                std::cout << "Saved to " << f << std::endl;
+            }
             ui.exportImage.clear();
+        }
+
+        if(ui.loadCompute.getState()){
+            const char* f = tinyfd_openFileDialog("Load compute shader", "compute.shader", 0, nullptr, "text file", 0);
+            if(f != nullptr){
+                raytracer.changeProgram(f);
+            }
+            ui.loadCompute.clear();
         }
 
         //---From compute shader output to framebuffer---
@@ -122,7 +152,7 @@ int mainUI(std::istream& input){
       
         //---UI---
         ui.begin();
-        ImGui::ShowDemoWindow(); 
+        //ImGui::ShowDemoWindow(); 
         ui.settings();
         ui.universe(&(raytracer.camera), &(raytracer.background), &planets);
         ui.viewport(framebuffer.getColorTexture(), raytracer.getDebugTexture(), &planets);

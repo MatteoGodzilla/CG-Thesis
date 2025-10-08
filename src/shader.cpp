@@ -25,4 +25,3 @@ GLuint linkProgram(std::vector<GLuint> shaders){
     glLinkProgram(result);
     return result;
 }
-

@@ -9,5 +9,6 @@ stdenv.mkDerivation {
         xorg.libX11
         xorg.libXrandr
         wayland
+        kdePackages.kdialog
     ];
 }

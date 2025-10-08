@@ -1,9 +1,7 @@
 #include "raytracer.h"
 
-Raytracer::Raytracer(){
-    program = linkProgram({
-        compileShader("compute.shader", GL_COMPUTE_SHADER)
-    });
+Raytracer::Raytracer(const char* computeShaderFile){
+    changeProgram(computeShaderFile);
     viewportSizeId = glGetUniformLocation(program, "viewportSize");
     cameraPosId = glGetUniformLocation(program, "cameraPos");
     lookDirId = glGetUniformLocation(program, "lookDir");
@@ -51,6 +49,15 @@ void Raytracer::dispatch(int x, int y){
     glUniform2f(gridSizeId, background.gridSize.x, background.gridSize.y);
     glUniform1f(backgroundDistanceId, background.distance);
     glDispatchCompute(std::min(x, workGroupMax[0]), std::min(y, workGroupMax[1]), 1);
+}
+
+void Raytracer::changeProgram(const char* filename){
+    if(program != 0){
+        glDeleteProgram(program);
+    }
+    program = linkProgram({
+        compileShader(filename, GL_COMPUTE_SHADER)
+    });
 }
 
 GLuint Raytracer::getOutputTexture(){

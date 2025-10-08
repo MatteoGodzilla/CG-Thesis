@@ -9,6 +9,16 @@ void UI::begin(){
 
 void UI::settings(){
     ImGui::Begin("Settings");
+    ImGui::Checkbox("Continuous rendering", &active.alwaysDispatch);
+    if(ImGui::Button("Render") || active.alwaysDispatch){
+        dispatch.set();
+    }
+    if(ImGui::Button("Load compute shader")){
+        loadCompute.set();
+    }
+    if(ImGui::Button("Export to png")) {
+        exportImage.set();
+    }
     ImGui::SeparatorText("Render settings");
     ImGui::DragInt2("Resolution", dirtyResolution);
     if(ImGui::Button("Apply resolution")){
@@ -24,15 +34,6 @@ void UI::settings(){
     ImGui::SeparatorText("Viewport settings");
     const char* filterLabels[] = {"Pixel perfect", "Fill", "Stretch"};
     ImGui::Combo("Filter", (int*)&(active.filter), filterLabels, 3);
-    ImGui::SeparatorText("Render");
-    ImGui::Checkbox("Continuous rendering", &active.alwaysDispatch);
-    if(ImGui::Button("Render") || active.alwaysDispatch){
-        dispatch.set();
-    }
-    ImGui::SameLine();
-    if(ImGui::Button("Save to file")) {
-        exportImage.set();
-    }
 
     ImGui::End();
 }
@@ -43,6 +44,14 @@ void UI::universe(Camera *camera, Background* background, std::vector<Planet>* r
         flag |= ImGuiWindowFlags_UnsavedDocument;
     }
     ImGui::Begin("Universe", NULL, flag);
+    if(ImGui::Button("Load")){
+        loadUniverse.set(); 
+    }
+    ImGui::SameLine();
+    if(ImGui::Button("Save")){
+        saveUniverse.set();
+        dirtyUniverse.clear();
+    }
     ImGui::InputText("Name", newName, BUF_SIZE);
     ImGui::SameLine();
     if(ImGui::Button("Add")){
@@ -54,10 +63,6 @@ void UI::universe(Camera *camera, Background* background, std::vector<Planet>* r
             .mass = 1
         });
         dirtyUniverse.set();
-    }
-    if(ImGui::Button("Save to universe.txt")){
-        saveUniverse.set();
-        dirtyUniverse.clear();
     }
     ImGui::SeparatorText("Edit");
     if(ImGui::TreeNode("Camera")){
