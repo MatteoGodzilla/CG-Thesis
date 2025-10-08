@@ -117,12 +117,12 @@ int mainUI(std::istream& input){
         glClearColor(0,0,0,1);
         glClear(GL_COLOR_BUFFER_BIT);
         viewport.update(settings, raytracer.getOutputTexture());
-        viewport.draw();
+        viewport.draw(settings->filter);
         framebuffer.unbind();
       
         //---UI---
         ui.begin();
-        //ImGui::ShowDemoWindow(); 
+        ImGui::ShowDemoWindow(); 
         ui.settings();
         ui.universe(&(raytracer.camera), &(raytracer.background), &planets);
         ui.viewport(framebuffer.getColorTexture(), raytracer.getDebugTexture(), &planets);

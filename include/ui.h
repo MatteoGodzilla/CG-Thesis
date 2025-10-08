@@ -14,6 +14,7 @@
 #include "flag.h"
 #include "background.h"
 
+
 #define BUF_SIZE 512
 
 class UI {
@@ -31,6 +32,7 @@ public:
     Flag dirtyUniverse;
     Flag exportImage;
 private:
+    ImVec2 mouseToComputePixel();
     Settings active;
     int dirtyResolution[2] = {DEFAULT_WIDTH, DEFAULT_HEIGHT};
     char newName[BUF_SIZE] = {0};

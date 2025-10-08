@@ -1,14 +1,21 @@
 #include "viewport.h"
+#include <iostream>
 
 Viewport::Viewport(){
     //Vertex
-    display = linkProgram({
-        compileShader("vertex.shader", GL_VERTEX_SHADER),
-        compileShader("fragment.shader", GL_FRAGMENT_SHADER)
+    GLuint vertexId = compileShader("shaders/vertex.shader", GL_VERTEX_SHADER);
+    programs[VF_PIXEL_PERFECT] = linkProgram({
+        vertexId, 
+        compileShader("shaders/frag_pixelperfect.shader", GL_FRAGMENT_SHADER)
     });
-
-    raytracerSizeId = glGetUniformLocation(display,"raytracerOutputSize");
-    viewportSizeId = glGetUniformLocation(display,"viewportSize");
+    programs[VF_FILL] = linkProgram({
+        vertexId, 
+        compileShader("shaders/frag_fill.shader", GL_FRAGMENT_SHADER)
+    });
+    programs[VF_STRETCH] = linkProgram({
+        vertexId, 
+        compileShader("shaders/frag_stretch.shader", GL_FRAGMENT_SHADER)
+    });
 
     //VAO    
     glGenVertexArrays(1, &quadVAO);
@@ -51,14 +58,18 @@ Viewport::Viewport(){
 }
 
 void Viewport::update(Settings* settings, GLuint textureId){
-    glUseProgram(display);
+    GLuint activeProgram = programs[settings->filter];
+    glUseProgram(activeProgram);
+    raytracerSizeId = glGetUniformLocation(activeProgram,"raytracerOutputSize");
+    viewportSizeId = glGetUniformLocation(activeProgram,"viewportSize");
     glUniform2f(raytracerSizeId, settings->resolution[0], settings->resolution[1]);
     glUniform2f(viewportSizeId, settings->viewportSize[0], settings->viewportSize[1]);
     glBindTexture(GL_TEXTURE_2D, textureId);
 }
 
-void Viewport::draw(){
-    glUseProgram(display);
+void Viewport::draw(ViewportFilter filter){
+    GLuint activeProgram = programs[filter];
+    glUseProgram(activeProgram);
     glBindVertexArray(quadVAO);
     glActiveTexture(GL_TEXTURE0);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
