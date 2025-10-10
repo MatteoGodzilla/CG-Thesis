@@ -1,8 +1,9 @@
 FLAGS = -Wall -Wpedantic -g -std=c++20
 INCLUDE = -Iinclude -Iglad/include -Iimgui -Iimgui/backends -Iglm -Icxxopts/include -Itinyfiledialogs-code
-LIBS = -lglfw -lOpenGL -lX11
+LIBS = -lglfw -lOpenGL -lX11 # Linux
+#LIBS = -lglfw3 -lcomdlg32 -lole32 # Mingw64
 
-main: src/main.cpp glad/src/glad.c build/renderer build/gui build/imgui 
+main: src/main.cpp glad/src/glad.c build/renderer build/gui build/imgui
 	mkdir -p build
 	g++ ${FLAGS} -c src/main.cpp ${INCLUDE} -o build/main.o
 	g++ ${FLAGS} -c glad/src/glad.c ${INCLUDE} -o build/glad.o
@@ -13,6 +14,7 @@ build/renderer: build/mainRenderer.o
 	touch build/renderer
 
 build/mainRenderer.o: src/mainRenderer.cpp include/mainRenderer.h
+	mkdir -p build
 	g++ ${FLAGS} -c src/mainRenderer.cpp ${INCLUDE} -o build/mainRenderer.o
 
 # Meta target for compiling the gui editor
@@ -23,35 +25,35 @@ build/mainUI.o: src/mainUI.cpp include/mainUI.h
 	mkdir -p build
 	g++ ${FLAGS} -c src/mainUI.cpp ${INCLUDE} -o build/mainUI.o
 
-build/shader.o: src/shader.cpp include/shader.h 
+build/shader.o: src/shader.cpp include/shader.h
 	mkdir -p build
 	g++ ${FLAGS} -c src/shader.cpp ${INCLUDE} -o build/shader.o
 
-build/ui.o: src/ui.cpp include/ui.h 
+build/ui.o: src/ui.cpp include/ui.h
 	mkdir -p build
 	g++ ${FLAGS} -c src/ui.cpp ${INCLUDE} -o build/ui.o
-	
-build/raytracer.o: src/raytracer.cpp include/raytracer.h 
+
+build/raytracer.o: src/raytracer.cpp include/raytracer.h
 	mkdir -p build
 	g++ ${FLAGS} -c src/raytracer.cpp ${INCLUDE} -o build/raytracer.o
 
-build/framebuffer.o: src/framebuffer.cpp include/framebuffer.h 
+build/framebuffer.o: src/framebuffer.cpp include/framebuffer.h
 	mkdir -p build
 	g++ ${FLAGS} -c src/framebuffer.cpp ${INCLUDE} -o build/framebuffer.o
 
-build/planet.o: src/planet.cpp include/planet.h 
+build/planet.o: src/planet.cpp include/planet.h
 	mkdir -p build
 	g++ ${FLAGS} -c src/planet.cpp ${INCLUDE} -o build/planet.o
 
-build/flag.o: src/flag.cpp include/flag.h 
+build/flag.o: src/flag.cpp include/flag.h
 	mkdir -p build
 	g++ ${FLAGS} -c src/flag.cpp ${INCLUDE} -o build/flag.o
 
-build/viewport.o: src/viewport.cpp include/viewport.h 
+build/viewport.o: src/viewport.cpp include/viewport.h
 	mkdir -p build
 	g++ ${FLAGS} -c src/viewport.cpp ${INCLUDE} -o build/viewport.o
 
-build/serialization.o: src/serialization.cpp include/serialization.h 
+build/serialization.o: src/serialization.cpp include/serialization.h
 	mkdir -p build
 	g++ ${FLAGS} -c src/serialization.cpp ${INCLUDE} -o build/serialization.o
 
@@ -88,11 +90,11 @@ build/imgui_impl_glfw.o: imgui/backends/imgui_impl_glfw.cpp
 	g++ ${FLAGS} -c imgui/backends/imgui_impl_glfw.cpp ${INCLUDE} -o build/imgui_impl_glfw.o
 
 # Tinyfiledialogs
-build/tinyfiledialogs.o: tinyfiledialogs-code/tinyfiledialogs.c tinyfiledialogs-code/tinyfiledialogs.h 
+build/tinyfiledialogs.o: tinyfiledialogs-code/tinyfiledialogs.c tinyfiledialogs-code/tinyfiledialogs.h
 	mkdir -p build
 	g++ ${FLAGS} -c tinyfiledialogs-code/tinyfiledialogs.c ${INCLUDE} -o build/tinyfiledialogs.o
 
-clean: 
+clean:
 	rm -r build/
 
 install: main
