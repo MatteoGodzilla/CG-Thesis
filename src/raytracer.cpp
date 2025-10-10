@@ -7,8 +7,12 @@ Raytracer::Raytracer(const char* computeShaderFile){
     lookDirId = glGetUniformLocation(program, "lookDir");
     upVectorId = glGetUniformLocation(program, "upVector");
     vFovId = glGetUniformLocation(program, "vFov");
-    gridSizeId = glGetUniformLocation(program, "gridSize");
+    //Background
+    backgroundTypeId = glGetUniformLocation(program, "backgroundType");
+    backgroundGridSizeId = glGetUniformLocation(program, "backgroundGridSize");
     backgroundDistanceId = glGetUniformLocation(program, "backgroundDistance");
+    backgroundColorAId = glGetUniformLocation(program, "backgroundColorA");
+    backgroundColorBId = glGetUniformLocation(program, "backgroundColorB");
 
     glGenTextures(1, &textureOutput);
     glBindTexture(GL_TEXTURE_2D, textureOutput);
@@ -42,12 +46,17 @@ void Raytracer::update(int textureWidth, int textureHeight){
 void Raytracer::dispatch(int x, int y){
     //std::cout << "DISPATCHED" << std::endl;
     glUseProgram(program);
+    //Camera
     glUniform3f(cameraPosId, camera.position.x, camera.position.y, camera.position.z);
     glUniform3f(lookDirId, camera.look.x, camera.look.y, camera.look.z);
     glUniform3f(upVectorId, camera.up.x, camera.up.y, camera.up.z);
     glUniform1f(vFovId, camera.verticalFOV);
-    glUniform2f(gridSizeId, background.gridSize.x, background.gridSize.y);
+    //Background
+    glUniform1i(backgroundTypeId, background.type); 
+    glUniform2f(backgroundGridSizeId, background.gridSize.x, background.gridSize.y);
     glUniform1f(backgroundDistanceId, background.distance);
+    glUniform3f(backgroundColorAId, background.colorA.x, background.colorA.y, background.colorA.z);  
+    glUniform3f(backgroundColorBId, background.colorB.x, background.colorB.y, background.colorB.z);  
     glDispatchCompute(std::min(x, workGroupMax[0]), std::min(y, workGroupMax[1]), 1);
 }
 

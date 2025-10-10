@@ -15,12 +15,17 @@ layout(std430, binding = 2) readonly buffer transmissionBuffer {
 };
 
 uniform vec2 viewportSize;
+//Camera
 uniform vec3 cameraPos;
 uniform vec3 lookDir;
 uniform vec3 upVector;
 uniform float vFov;
-uniform vec2 gridSize;
+//Background
+uniform int backgroundType;
+uniform vec2 backgroundGridSize;
 uniform float backgroundDistance;
+uniform vec2 backgroundColorA;
+uniform vec2 backgroundColorB;
 
 void main(){
     vec4 pixel = vec4(0,0,0,0);

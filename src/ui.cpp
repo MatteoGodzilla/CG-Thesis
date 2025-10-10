@@ -11,11 +11,14 @@ void UI::settings(){
     bool openModal = false;
     ImGui::BeginMainMenuBar();
     if(ImGui::BeginMenu("File")){
-        if(ImGui::MenuItem("Load universe file")){
+        if(ImGui::MenuItem("Load universe")){
             loadUniverse.set(); 
         }
-        if(ImGui::MenuItem("Save universe file")){
+        if(ImGui::MenuItem("Save universe")){
             saveUniverse.set();
+        }
+        if(ImGui::MenuItem("Save universe as")){
+            saveUniverseAs.set();
         }
         if(ImGui::MenuItem("Load compute shader")){
             loadCompute.set();
@@ -25,8 +28,16 @@ void UI::settings(){
         }
         ImGui::EndMenu();
     }
-    if(ImGui::BeginMenu("Render")){
-        if(ImGui::MenuItem("Render frame")){
+    std::string renderMenuLabel = "Render";
+    if(outdatedRender.getState()){
+        renderMenuLabel += " *";
+    }
+    if(ImGui::BeginMenu(renderMenuLabel.c_str())){
+        std::string renderMenuItem = "Render frame";
+        if(outdatedRender.getState()){
+            renderMenuItem += " *";
+        }
+        if(ImGui::MenuItem(renderMenuItem.c_str())){
             dispatch.set();
         }
         ImGui::MenuItem("Continuous rendering", NULL, &active.alwaysDispatch);
@@ -63,6 +74,7 @@ void UI::settings(){
     ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
     if(ImGui::BeginPopupModal("Set custom resolution", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
         ImGui::DragInt2("Render resolution", dirtyResolution);
+        //TODO: remove dirty resolution from .h and put a temporary array in here
         if(ImGui::Button("Apply resolution")){
             active.resolution[0] = dirtyResolution[0];
             active.resolution[1] = dirtyResolution[1];
@@ -76,13 +88,6 @@ void UI::settings(){
     }
 
     ImGui::EndMainMenuBar();
-    if(active.alwaysDispatch){
-        dispatch.set();
-    }
-    /*
-    ImGui::SeparatorText("Render settings");
-    ImGui::End();
-    */
 }
 
 void UI::universe(Camera *camera, Background* background, std::vector<Planet>* ref){
@@ -103,6 +108,7 @@ void UI::universe(Camera *camera, Background* background, std::vector<Planet>* r
             .mass = 1
         });
         dirtyUniverse.set();
+        outdatedRender.set();
     }
     ImGui::SeparatorText("Edit");
     if(ImGui::TreeNode("Camera")){
@@ -119,18 +125,39 @@ void UI::universe(Camera *camera, Background* background, std::vector<Planet>* r
             camera->look = glm::vec3(lookArray[0], lookArray[1], lookArray[2]);
             camera->up = glm::vec3(upArray[0], upArray[1], upArray[2]);
             dirtyUniverse.set();
+            outdatedRender.set();
         }
 
         ImGui::TreePop();
     }
     if(ImGui::TreeNode("Background")){
         bool modified = false;
-        float gridArray[2] = {background->gridSize.x, background->gridSize.y};
-        modified |= ImGui::DragFloat2("Grid Size (m)", gridArray, 1.0f, 0.0f, 0.0f, "%.3e");
-        modified |= ImGui::DragFloat("Distance (m)", &(background->distance), 1.0f, 0.0f, 0.0f, "%.3e");
+        const char* types[] = {"Solid", "Grid"};
+        ImGui::Combo("Type", (int*)(&background->type), types, BG_SIZE);
+
+        if(background->type == BG_SOLID){
+            float colorATemp[] = {background->colorA.r, background->colorA.g, background->colorA.b};
+            modified = ImGui::ColorEdit3("Color", colorATemp);
+            if(modified){
+                background->colorA = glm::vec3(colorATemp[0], colorATemp[1], colorATemp[2]);
+            }
+        } else if(background->type == BG_GRID){
+            float colorATemp[] = {background->colorA.r, background->colorA.g, background->colorA.b};
+            float colorBTemp[] = {background->colorB.r, background->colorB.g, background->colorB.b};
+            float gridArray[2] = {background->gridSize.x, background->gridSize.y};
+            modified |= ImGui::ColorEdit3("Color A", colorATemp);
+            modified |= ImGui::ColorEdit3("Color B", colorBTemp);
+            modified |= ImGui::DragFloat2("Grid Size (m)", gridArray, 1.0f, 0.0f, 0.0f, "%.3e");
+            modified |= ImGui::DragFloat("Distance (m)", &(background->distance), 1.0f, 0.0f, 0.0f, "%.3e");
+            if(modified){
+                background->gridSize = glm::vec2(gridArray[0], gridArray[1]);
+                background->colorA = glm::vec3(colorATemp[0], colorATemp[1], colorATemp[2]);
+                background->colorB = glm::vec3(colorBTemp[0], colorBTemp[1], colorBTemp[2]);
+            }
+        }
         if(modified){
-            background->gridSize = glm::vec2(gridArray[0], gridArray[1]);
             dirtyUniverse.set();
+            outdatedRender.set();
         }
         ImGui::TreePop();
     }
@@ -148,6 +175,7 @@ void UI::universe(Camera *camera, Background* background, std::vector<Planet>* r
             if(ImGui::Button("Remove")){
                 ref->erase(ref->begin() + i);
                 dirtyUniverse.set();
+                outdatedRender.set();
             }
 
             if(modified){
@@ -155,6 +183,7 @@ void UI::universe(Camera *camera, Background* background, std::vector<Planet>* r
                 p.color = glm::vec3(colorArray[0], colorArray[1], colorArray[2]);
                 updateUniverse.set();
                 dirtyUniverse.set();
+                outdatedRender.set();
             }
 
             ImGui::TreePop();

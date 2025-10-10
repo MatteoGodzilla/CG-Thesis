@@ -30,15 +30,16 @@ int main(int argc, char** argv){
         std::cout << options.help() << std::endl;
     } else if(argc == 1 || result["gui"].as<bool>()){
         if(result.count("stdin") == 1){
-            return mainUI(std::cin);
+            return mainUI(std::cin, "");
         } else {
             //Attempt to load from file (default behaviour)
-            std::ifstream input = std::ifstream(result["i"].as<std::string>());
+            std::string filename = result["i"].as<std::string>();
+            std::ifstream input = std::ifstream(filename);
             if(!input.is_open()){
                 std::cerr << "COULD NOT OPEN FILE" << std::endl;
                 return 1;
             }
-            int ret = mainUI(input);
+            int ret = mainUI(input, filename);
             input.close();
             return ret;
         }
@@ -60,7 +61,6 @@ int main(int argc, char** argv){
             return 1;
         }
         height = result["h"].as<int>();
-
 
         if(result.count("o") == 1){
             output = result["o"].as<std::string>();

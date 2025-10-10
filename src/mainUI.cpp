@@ -8,7 +8,7 @@ void GLAPIENTRY MessageCallback( GLenum source, GLenum type, GLuint id, GLenum s
     }
 }
 
-int mainUI(std::istream& input){
+int mainUI(std::istream& input, std::string lastOpenedFile){
     /* Initialize the library */
     if (!glfwInit())
         return 1;
@@ -76,10 +76,11 @@ int mainUI(std::istream& input){
         Settings* settings = ui.getSettings();
         int w = settings->resolution[0];
         int h = settings->resolution[1];
-        if(ui.dispatch.getState()){
+        if(ui.dispatch.getState() || (settings->alwaysDispatch && ui.outdatedRender.getState())){
             raytracer.update(w, h);
             raytracer.dispatch(w, h);
             ui.dispatch.clear();
+            ui.outdatedRender.clear();
         }
         
         if(ui.loadUniverse.getState()){
@@ -91,6 +92,7 @@ int mainUI(std::istream& input){
                     planets.clear();
                     deserializeAll(newInput, &(raytracer.camera), &(raytracer.background), &planets);
                     ui.updateUniverse.set();
+                    lastOpenedFile = std::string(f);
                     newInput.close();
                 }
             }
@@ -105,15 +107,27 @@ int mainUI(std::istream& input){
         }
 
         if(ui.saveUniverse.getState()){
+            std::ofstream output(lastOpenedFile);
+            if(output.is_open()){
+                serializeAll(output, &(raytracer.camera), &(raytracer.background), &planets);
+                output.close();
+            }
+            ui.saveUniverse.clear();
+            ui.dirtyUniverse.clear();
+        }
+
+        if(ui.saveUniverseAs.getState()){
             const char* f = tinyfd_saveFileDialog("Save universe", UNIVERSE, 0, nullptr,nullptr);
             if(f != nullptr){
                 std::ofstream output(f);
                 if(output.is_open()){
                     serializeAll(output, &(raytracer.camera), &(raytracer.background), &planets);
+                    lastOpenedFile = std::string(f);
                     output.close();
                 }
             }
-            ui.saveUniverse.clear();
+            ui.saveUniverseAs.clear();
+            ui.dirtyUniverse.clear();
         }
     
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);

@@ -30,9 +30,11 @@ public:
     Flag updateUniverse;
     Flag loadUniverse;
     Flag saveUniverse;
+    Flag saveUniverseAs;
     Flag dirtyUniverse;
     Flag exportImage;
     Flag loadCompute;
+    Flag outdatedRender; //instead of autopsy report
 private:
     ImVec2 mouseToComputePixel();
     Settings active;

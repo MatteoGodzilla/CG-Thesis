@@ -22,4 +22,4 @@
 #define WINDOW_HEIGHT 720
 #define UNIVERSE "universe.txt"
 
-int mainUI(std::istream& input);
+int mainUI(std::istream& input, std::string lastOpenedFile);

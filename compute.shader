@@ -25,12 +25,17 @@ layout(std430, binding = 2) readonly buffer transmissionBuffer {
 };
 
 uniform vec2 viewportSize;
+//Camera
 uniform vec3 cameraPos;
 uniform vec3 lookDir;
 uniform vec3 upVector;
 uniform float vFov;
-uniform vec2 gridSize;
+//Background
+uniform int backgroundType;
+uniform vec2 backgroundGridSize;
 uniform float backgroundDistance;
+uniform vec3 backgroundColorA;
+uniform vec3 backgroundColorB;
 
 //Orthographic projection
 Ray viewportToWorldRay(vec2 viewNorm){
@@ -78,25 +83,21 @@ vec3 rayPoint(Ray ray, float t){
     return ray.pos + t * ray.dir;
 }
 
-vec3 background(vec3 point, Plane backPlane){
-    /*
+vec3 backgroundGrid(vec3 point, Plane backPlane){
     vec3 planeUp = upVector; 
     vec3 planeRight = cross(upVector, backPlane.normal);
     vec3 K = point - backPlane.origin;
     float planeX = dot(K, planeRight) / length(planeRight);
     float planeY = dot(K, planeUp) / length(planeUp);
-    float resX = mod(planeX, gridSize.x) / gridSize.x;
-    float resY = mod(planeY, gridSize.y) / gridSize.y;
+    float resX = mod(planeX, backgroundGridSize.x) / backgroundGridSize.x;
+    float resY = mod(planeY, backgroundGridSize.y) / backgroundGridSize.y;
 
     const float gridThickness = 0.1;
-    vec3 result = vec3(0, 0.2, 0.2);
+    vec3 result = backgroundColorA;
     if(resX < gridThickness || resY < gridThickness){
-        result = vec3(0,0,0);
+        result = backgroundColorB;
     }
     return result;
-    //return vec3(resX, resY, 0);
-    */
-    return vec3(0,0.1,0.1);
 }
 
 Ray bendRay(Ray original, Planet p, vec3 closestPoint){
@@ -165,19 +166,6 @@ void main(){
                     closestMissedPlanet = i;
                     closestMissT = impactT;
                 }
-                /*
-                //We didn't hit a planet by definition
-                // Check if the ray should be bent or go straight to the background
-                float isInFront = dot(worldRay.dir, data[i].position - worldRay.pos);
-                if(isInFront > 0.5){compute
-                    float impactT = RaySphereClosestPoint(worldRay, data[i]);
-                    if(impactT > 0 && impactT < closestMissT){
-                        //We should bend the ray 
-                        closestMissedPlanet = i;
-                        closestMissT = impactT;
-                    }
-                }
-                */
             }
         }
         if(closestMissedPlanet >= 0){
@@ -195,18 +183,16 @@ void main(){
         debug.r = planetIndex;
     } else {
         //we assume the ray has gone into the background
-      
-        float backT = RayPlaneIntersection(worldRay, backPlane);
-        vec3 backPoint = rayPoint(worldRay, backT);
-        vec3 backgroundColor = background(backPoint, backPlane);
-        //pixel.rgb = mix(backgroundColor, atmosphere, clamp((1 - delta / 50),0,1));
-        pixel.rgb = backgroundColor;
-        
-        //pixel.rgb = vec3(1,1,1) * float(bounces) / 10;
-        
-        //pixel.rgb = abs(worldRay.dir);
+        if(backgroundType == 0){
+            //solid
+            pixel.rgb = backgroundColorA;
+        } else {
+            //Grid
+            float backT = RayPlaneIntersection(worldRay, backPlane);
+            vec3 backPoint = rayPoint(worldRay, backT);
+            pixel.rgb = backgroundGrid(backPoint, backPlane);
+        }
     } 
-    //debug.rgb = vec3(1,1,1) * float(bounces) / 10;
     debug.g = bounces;
     
     imageStore(texOutput, pixelCoords, pixel);

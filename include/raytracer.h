@@ -22,19 +22,28 @@ public:
         .verticalFOV = 10
     };
     Background background {
+        .type = BG_SOLID,
         .gridSize = glm::vec2(1e6, 1e6),
-        .distance = 1e6
+        .distance = 1e6,
+        .colorA = glm::vec3(0, 0.1, 0.2),
+        .colorB = glm::vec3(0,0,0)
     };
 private: 
     GLuint textureOutput;
     GLuint debugOutput;
     GLuint program = 0;
     GLuint viewportSizeId;
+    //Camera stuff
     GLuint cameraPosId;
     GLuint lookDirId;
     GLuint upVectorId;
     GLuint vFovId;
-    GLuint gridSizeId;
+    //Background stuff
+    GLuint backgroundTypeId;
+    GLuint backgroundGridSizeId;
     GLuint backgroundDistanceId;
+    GLuint backgroundColorAId;
+    GLuint backgroundColorBId;
+    //other
     int workGroupMax[2] = {0,0};
 };
