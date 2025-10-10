@@ -8,34 +8,81 @@ void UI::begin(){
 }
 
 void UI::settings(){
-    ImGui::Begin("Settings");
-    ImGui::Checkbox("Continuous rendering", &active.alwaysDispatch);
-    if(ImGui::Button("Render") || active.alwaysDispatch){
+    bool openModal = false;
+    ImGui::BeginMainMenuBar();
+    if(ImGui::BeginMenu("File")){
+        if(ImGui::MenuItem("Load universe file")){
+            loadUniverse.set(); 
+        }
+        if(ImGui::MenuItem("Save universe file")){
+            saveUniverse.set();
+        }
+        if(ImGui::MenuItem("Load compute shader")){
+            loadCompute.set();
+        }
+        if(ImGui::MenuItem("Export to png")) {
+            exportImage.set();
+        }
+        ImGui::EndMenu();
+    }
+    if(ImGui::BeginMenu("Render")){
+        if(ImGui::MenuItem("Render frame")){
+            dispatch.set();
+        }
+        ImGui::MenuItem("Continuous rendering", NULL, &active.alwaysDispatch);
+        if(ImGui::MenuItem("Set custom resolution")){
+            openModal = true;
+        }
+        if(ImGui::MenuItem("Set resolution to viewport")){
+            active.resolution[0] = active.viewportSize[0];
+            active.resolution[1] = active.viewportSize[1];
+            dirtyResolution[0] = active.viewportSize[0];
+            dirtyResolution[1] = active.viewportSize[1];
+        }
+        ImGui::EndMenu();
+    }
+    if(ImGui::BeginMenu("Viewport")){
+        const char* filterLabels[] = {"Pixel perfect", "Fill", "Stretch"};
+        for(int i = 0; i < 3; i++){
+            bool isSelected = active.filter == i;
+            if(ImGui::MenuItem(filterLabels[i], NULL, &isSelected)){
+                active.filter = (ViewportFilter)i;
+            }
+        }
+        ImGui::EndMenu(); 
+    }
+    if(ImGui::BeginMenu("Help")){
+        ImGui::EndMenu(); 
+    }
+
+    if(openModal){
+        ImGui::OpenPopup("Set custom resolution");
+    }
+
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    if(ImGui::BeginPopupModal("Set custom resolution", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
+        ImGui::DragInt2("Render resolution", dirtyResolution);
+        if(ImGui::Button("Apply resolution")){
+            active.resolution[0] = dirtyResolution[0];
+            active.resolution[1] = dirtyResolution[1];
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if(ImGui::Button("Cancel")){
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+
+    ImGui::EndMainMenuBar();
+    if(active.alwaysDispatch){
         dispatch.set();
     }
-    if(ImGui::Button("Load compute shader")){
-        loadCompute.set();
-    }
-    if(ImGui::Button("Export to png")) {
-        exportImage.set();
-    }
+    /*
     ImGui::SeparatorText("Render settings");
-    ImGui::DragInt2("Resolution", dirtyResolution);
-    if(ImGui::Button("Apply resolution")){
-        active.resolution[0] = dirtyResolution[0];
-        active.resolution[1] = dirtyResolution[1];
-    }
-    if(ImGui::Button("Set resolution to viewport")){
-        active.resolution[0] = active.viewportSize[0];
-        active.resolution[1] = active.viewportSize[1];
-        dirtyResolution[0] = active.viewportSize[0];
-        dirtyResolution[1] = active.viewportSize[1];
-    }
-    ImGui::SeparatorText("Viewport settings");
-    const char* filterLabels[] = {"Pixel perfect", "Fill", "Stretch"};
-    ImGui::Combo("Filter", (int*)&(active.filter), filterLabels, 3);
-
     ImGui::End();
+    */
 }
 
 void UI::universe(Camera *camera, Background* background, std::vector<Planet>* ref){
@@ -44,14 +91,7 @@ void UI::universe(Camera *camera, Background* background, std::vector<Planet>* r
         flag |= ImGuiWindowFlags_UnsavedDocument;
     }
     ImGui::Begin("Universe", NULL, flag);
-    if(ImGui::Button("Load")){
-        loadUniverse.set(); 
-    }
-    ImGui::SameLine();
-    if(ImGui::Button("Save")){
-        saveUniverse.set();
-        dirtyUniverse.clear();
-    }
+    ImGui::SeparatorText("Add planet");
     ImGui::InputText("Name", newName, BUF_SIZE);
     ImGui::SameLine();
     if(ImGui::Button("Add")){

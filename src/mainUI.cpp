@@ -152,7 +152,7 @@ int mainUI(std::istream& input){
       
         //---UI---
         ui.begin();
-        //ImGui::ShowDemoWindow(); 
+        ImGui::ShowDemoWindow(); 
         ui.settings();
         ui.universe(&(raytracer.camera), &(raytracer.background), &planets);
         ui.viewport(framebuffer.getColorTexture(), raytracer.getDebugTexture(), &planets);
