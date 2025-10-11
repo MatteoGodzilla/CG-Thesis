@@ -33,6 +33,12 @@ int mainUI(std::istream& input, std::string lastOpenedFile){
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(MessageCallback, 0);
 
+    const GLubyte* vendor = glGetString(GL_VENDOR);
+    const GLubyte* renderer = glGetString(GL_RENDERER);
+
+    std::cout << vendor << std::endl;
+    std::cout << renderer << std::endl;
+
     //Init ImGui
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();

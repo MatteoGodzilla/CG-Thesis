@@ -25,6 +25,12 @@ int mainRenderer(int width, int height, std::istream& input, std::string output)
         return 3;
     }
 
+    const GLubyte* vendor = glGetString(GL_VENDOR);
+    const GLubyte* renderer = glGetString(GL_RENDERER);
+
+    std::cout << vendor << std::endl;
+    std::cout << renderer << std::endl;
+
     //Create raytracer
     Raytracer raytracer("compute.shader");
     raytracer.update(width, height);
