@@ -37,6 +37,12 @@ uniform float backgroundDistance;
 uniform vec3 backgroundColorA;
 uniform vec3 backgroundColorB;
 
+//Hit 'enum'
+const uint HIT_BACKGROUND = 0;
+const uint HIT_PLANET = 1;
+const uint HIT_LENS = 2;
+
+
 //Orthographic projection
 Ray viewportToWorldRay(vec2 viewNorm){
     //In viewport, (0,0) is top left corner
@@ -51,13 +57,12 @@ Ray viewportToWorldRay(vec2 viewNorm){
 //Otherwise it returns vec2(-1, -1)
 //We assume that the ray has a direction vector that is normalized
 vec2 RaySphereIntersection(Ray ray, Planet sphere){
-    vec3 K = ray.pos - sphere.position;
+    vec3 K = sphere.position - ray.pos;
     float r = sphere.radius;
-    //using reduced quadratic
-    float a = 1; //dot(ray.dir, ray.dir);
-    float b = dot(ray.dir, K);
+    float a = dot(ray.dir, ray.dir);
+    float b = -2.0 * dot(ray.dir, K);
     float c = dot(K, K) - r*r;
-    float delta = b*b - a*c;
+    float delta = b*b - 4*a*c;
     if(delta >= 0){
         float tPlus = (-b + sqrt(delta)) / (2*a);
         float tMinus = (-b - sqrt(delta)) / (2*a);
@@ -101,13 +106,13 @@ vec3 backgroundGrid(vec3 point, Plane backPlane){
 }
 
 Ray bendRay(Ray original, Planet p, vec3 closestPoint){
+    float impactRadius = length(closestPoint - p.position);
     const float C = 299792458.0; 
     const float G = 6.67430e-11;
-    float impactRadius = length(closestPoint - p.position);
     float alpha = 4 * G * p.mass / (C * C * impactRadius);
     //float alpha = p.mass / impactRadius;
     float deviation = length(original.dir) * tan(alpha);
-    vec3 towardsCenter = p.position - closestPoint;
+    vec3 towardsCenter = normalize(p.position - closestPoint);
     vec3 newDir = normalize(original.dir + towardsCenter * deviation);
     return Ray(closestPoint, newDir);
 }
@@ -139,62 +144,58 @@ void main(){
     pixelCoordsNorm.y = float(pixelCoords.y)/(gl_NumWorkGroups.y);
 
     Ray worldRay = viewportToWorldRay(pixelCoordsNorm); 
-   
-    bool hitPlanet = false;
-    int planetIndex = -1;
     Plane backPlane = Plane(cameraPos + lookDir * backgroundDistance, -lookDir);
-    int closestMissedPlanet = -1;
-    int j;
-    int bounces = 0;
 
-    for(j = 0; j < 10 && !hitPlanet; j++){
-        float closestHit = 999999999.9;
-        float closestMissT = 999999999.9;
-        closestMissedPlanet = -1;
+    int deflections = 0;
+    for(int j = 0; j < 10; j++){
+        float minT = RayPlaneIntersection(worldRay, backPlane);
+        uint intersectionType = HIT_BACKGROUND;
+        int closestPlanetIndex = -1;
+
         for(int i = 0; i < data.length(); i++){
-            vec2 tVals = RaySphereIntersection(worldRay, data[i]);
-            float t = getClosestT(tVals);
-            if(t > 0 && t < closestHit){
-                //We hit a planet!
-                hitPlanet = true;
-                planetIndex = i;
-                closestHit = t;
-            } else if(t < 0){
-                Plane planetLens = Plane(data[i].position, -lookDir); 
-                float impactT = RayPlaneIntersection(worldRay, planetLens);
-                if(impactT > 0 && impactT < closestMissT){
-                    closestMissedPlanet = i;
-                    closestMissT = impactT;
+            vec3 planeNormal = -lookDir;
+            Plane planetLens = Plane(data[i].position, planeNormal); 
+            float lensIntersectionT = RayPlaneIntersection(worldRay, planetLens);
+            if(lensIntersectionT > 0 && lensIntersectionT < minT){
+                minT = lensIntersectionT;
+                intersectionType = HIT_LENS;
+                closestPlanetIndex = i;
+                //check if the ray also hit the planet
+                vec3 intersectionPoint = rayPoint(worldRay, minT);
+                float distanceFromCenter = length(intersectionPoint - data[i].position);
+                if(distanceFromCenter < data[i].radius){
+                    //adjust minT
+                    float distanceFromPlane = sqrt(data[i].radius * data[i].radius - distanceFromCenter * distanceFromCenter);
+                    vec3 frontPoint = intersectionPoint + planeNormal * distanceFromPlane;
+                    vec3 backPoint = intersectionPoint - planeNormal * distanceFromPlane;
+                    float frontT = length(frontPoint - worldRay.pos) / length(worldRay.dir);
+                    float backT = length(backPoint - worldRay.pos) / length(worldRay.dir);
+                    minT = min(frontT, backT);
+                    intersectionType = HIT_PLANET;
                 }
             }
         }
-        if(closestMissedPlanet >= 0){
-            //Apply angle
-            vec3 closestPoint = rayPoint(worldRay, closestMissT);
-            worldRay = bendRay(worldRay, data[closestMissedPlanet], closestPoint);
-            bounces++;
-        } else {
+        
+        vec3 p = rayPoint(worldRay, minT);
+        debug.r = closestPlanetIndex;
+        debug.g = intersectionType;
+        debug.b = minT;
+
+        if(intersectionType == HIT_PLANET){
+            //shade planet
+            pixel.rgb = data[closestPlanetIndex].color;
             break;
+        } else if (intersectionType == HIT_BACKGROUND){
+            pixel.rgb = backgroundGrid(p, backPlane);
+            break;
+        } else {
+            worldRay = bendRay(worldRay, data[closestPlanetIndex], p);  
+            deflections++;
         }
     }
+   
+    debug.rgb = worldRay.dir;
 
-    if(hitPlanet){
-        pixel.rgb = data[planetIndex].color * (1 - float(bounces) / 10);
-        debug.r = planetIndex;
-    } else {
-        //we assume the ray has gone into the background
-        if(backgroundType == 0){
-            //solid
-            pixel.rgb = backgroundColorA;
-        } else {
-            //Grid
-            float backT = RayPlaneIntersection(worldRay, backPlane);
-            vec3 backPoint = rayPoint(worldRay, backT);
-            pixel.rgb = backgroundGrid(backPoint, backPlane);
-        }
-    } 
-    debug.g = bounces;
-    
     imageStore(texOutput, pixelCoords, pixel);
     imageStore(debugOutput, pixelCoords, debug);
 }

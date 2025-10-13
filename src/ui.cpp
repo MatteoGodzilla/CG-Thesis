@@ -200,22 +200,34 @@ void UI::viewport(GLuint framebufferTexture, GLuint computeTexture, std::vector<
     active.viewportSize[0] = availableSpace.x;
     active.viewportSize[1] = availableSpace.y;
 
-    ImVec2 mousePixel = mouseToComputePixel();
+    ImVec2 mouse = mouseToComputePixel();
+    int x = std::floor(mouse.x);
+    int y = std::floor(mouse.y);
     ImGui::Image((ImTextureID)framebufferTexture, availableSpace);
-    if(ImGui::IsItemHovered() && mousePixel.x >= 0 && mousePixel.y >= 0 && mousePixel.x < active.resolution[0] && mousePixel.y < active.resolution[1]) {
-        float pixel[4] = {0};
-        glGetTextureSubImage(computeTexture, 0, mousePixel.x, mousePixel.y, 0, 1, 1, 1, GL_RGBA, GL_FLOAT, 4 * sizeof(GL_FLOAT), &pixel); 
-        int planetIndex = static_cast<int>(pixel[0]);
-        int bounces = static_cast<int>(pixel[1]);
-        if(planetIndex >= 0){
-            ImGui::BeginTooltip();
-            ImGui::Text(" %s\n Bounces: %d", ref->at(planetIndex).name.c_str(), bounces);
-            ImGui::EndTooltip();
-        }
+    if(ImGui::IsItemHovered() && x >= 0 && y >= 0 && x < active.resolution[0] && y < active.resolution[1]) {
+        int width = active.resolution[0];
+        float r = debugBuffer.at((x + y * width) * 4 + 0);
+        float g = debugBuffer.at((x + y * width) * 4 + 1);
+        float b = debugBuffer.at((x + y * width) * 4 + 2);
+        float a = debugBuffer.at((x + y * width) * 4 + 3);
+        ImGui::BeginTooltip();
+        //ImGui::Text(" %s\n %d", ref->at(planetIndex).name.c_str(), bounces);
+        ImGui::Text(" %f\n %f\n %f\n %f\n x:%d y:%d\n ", r, g, b, a, x, y);
+        ImGui::EndTooltip();
     }
 
     ImGui::End();
     ImGui::PopStyleVar();
+}
+
+void UI::copyDebugTexture(GLuint debugTexture){
+    int width = active.resolution[0];
+    int height = active.resolution[1];
+
+    debugBuffer.clear();
+    debugBuffer = std::vector<float>(width * height * 4);
+    glBindTexture(GL_TEXTURE_2D, debugTexture);
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, &debugBuffer[0]);
 }
 
 void UI::end(){

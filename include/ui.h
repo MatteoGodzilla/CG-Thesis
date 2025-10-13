@@ -2,6 +2,7 @@
 #include <string>
 #include <iostream>
 #include <glad/glad.h>
+#include <cmath>
 #include "glm/vec2.hpp"
 //Imgui
 #include "imgui.h"
@@ -21,6 +22,7 @@ class UI {
 public:
     void begin();
     void settings();
+    void copyDebugTexture(GLuint debugTexture);
     void viewport(GLuint framebufferTexture, GLuint computeTexture, std::vector<Planet>* ref);
     void universe(Camera *camera, Background* background, std::vector<Planet>* ref);
     void end();
@@ -40,5 +42,6 @@ private:
     Settings active;
     int dirtyResolution[2] = {DEFAULT_WIDTH, DEFAULT_HEIGHT};
     char newName[BUF_SIZE] = {0};
+    std::vector<float> debugBuffer;
 };
 

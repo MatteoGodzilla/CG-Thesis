@@ -82,11 +82,13 @@ int mainUI(std::istream& input, std::string lastOpenedFile){
         Settings* settings = ui.getSettings();
         int w = settings->resolution[0];
         int h = settings->resolution[1];
+        bool dispatchedThisFrame = false;
         if(ui.dispatch.getState() || (settings->alwaysDispatch && ui.outdatedRender.getState())){
             raytracer.update(w, h);
             raytracer.dispatch(w, h);
             ui.dispatch.clear();
             ui.outdatedRender.clear();
+            dispatchedThisFrame = true;
         }
         
         if(ui.loadUniverse.getState()){
@@ -172,10 +174,13 @@ int mainUI(std::istream& input, std::string lastOpenedFile){
       
         //---UI---
         ui.begin();
-        ImGui::ShowDemoWindow(); 
+        if(dispatchedThisFrame){
+            ui.copyDebugTexture(raytracer.getDebugTexture());
+        }
+        //ImGui::ShowDemoWindow(); 
         ui.settings();
         ui.universe(&(raytracer.camera), &(raytracer.background), &planets);
-        ui.viewport(framebuffer.getColorTexture(), raytracer.getDebugTexture(), &planets);
+        ui.viewport(framebuffer.getColorTexture(), raytracer.getOutputTexture(), &planets);
         ui.end();
 
         glfwSwapBuffers(window);
