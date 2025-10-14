@@ -40,24 +40,23 @@ void UI::settings(){
         if(ImGui::MenuItem(renderMenuItem.c_str())){
             dispatch.set();
         }
-        ImGui::MenuItem("Continuous rendering", NULL, &active.alwaysDispatch);
+        ImGui::MenuItem("Continuous rendering", NULL, &alwaysDispatch);
         if(ImGui::MenuItem("Set custom resolution")){
             openModal = true;
         }
         if(ImGui::MenuItem("Set resolution to viewport")){
-            active.resolution[0] = active.viewportSize[0];
-            active.resolution[1] = active.viewportSize[1];
-            dirtyResolution[0] = active.viewportSize[0];
-            dirtyResolution[1] = active.viewportSize[1];
+            resolution = viewportSize;
+            dirtyResolution[0] = viewportSize.x;
+            dirtyResolution[1] = viewportSize.y;
         }
         ImGui::EndMenu();
     }
     if(ImGui::BeginMenu("Viewport")){
         const char* filterLabels[] = {"Pixel perfect", "Fill", "Stretch"};
         for(int i = 0; i < 3; i++){
-            bool isSelected = active.filter == i;
+            bool isSelected = filter == i;
             if(ImGui::MenuItem(filterLabels[i], NULL, &isSelected)){
-                active.filter = (ViewportFilter)i;
+                filter = (ViewportFilter)i;
             }
         }
         ImGui::EndMenu(); 
@@ -74,10 +73,9 @@ void UI::settings(){
     ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
     if(ImGui::BeginPopupModal("Set custom resolution", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
         ImGui::DragInt2("Render resolution", dirtyResolution);
-        //TODO: remove dirty resolution from .h and put a temporary array in here
         if(ImGui::Button("Apply resolution")){
-            active.resolution[0] = dirtyResolution[0];
-            active.resolution[1] = dirtyResolution[1];
+            resolution.x = dirtyResolution[0];
+            resolution.y = dirtyResolution[1];
             ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
@@ -197,15 +195,15 @@ void UI::viewport(GLuint framebufferTexture, GLuint computeTexture, std::vector<
     ImGui::Begin("ViewPort");
 
     ImVec2 availableSpace = ImGui::GetContentRegionAvail();
-    active.viewportSize[0] = availableSpace.x;
-    active.viewportSize[1] = availableSpace.y;
+    viewportSize.x = availableSpace.x;
+    viewportSize.y = availableSpace.y;
 
     ImVec2 mouse = mouseToComputePixel();
     int x = std::floor(mouse.x);
     int y = std::floor(mouse.y);
     ImGui::Image((ImTextureID)framebufferTexture, availableSpace);
-    if(ImGui::IsItemHovered() && x >= 0 && y >= 0 && x < active.resolution[0] && y < active.resolution[1]) {
-        int width = active.resolution[0];
+    if(ImGui::IsItemHovered() && x >= 0 && y >= 0 && x < resolution.x && y < resolution.y) {
+        int width = resolution.x;
         float r = debugBuffer.at((x + y * width) * 4 + 0);
         float g = debugBuffer.at((x + y * width) * 4 + 1);
         float b = debugBuffer.at((x + y * width) * 4 + 2);
@@ -221,8 +219,8 @@ void UI::viewport(GLuint framebufferTexture, GLuint computeTexture, std::vector<
 }
 
 void UI::copyDebugTexture(GLuint debugTexture){
-    int width = active.resolution[0];
-    int height = active.resolution[1];
+    int width = resolution.x;
+    int height = resolution.y;
 
     debugBuffer.clear();
     debugBuffer = std::vector<float>(width * height * 4);
@@ -240,16 +238,16 @@ ImVec2 UI::mouseToComputePixel(){
     ImVec2 mouse = io.MousePos;
 
     ImVec2 imagePos = ImGui::GetCursorScreenPos();
-    ImVec2 availableSpace = ImVec2(active.viewportSize[0], active.viewportSize[1]);
+    ImVec2 availableSpace = ImVec2(viewportSize.x, viewportSize.y);
 
-    switch(active.filter){
+    switch(filter){
         case VF_PIXEL_PERFECT:
             return ImVec2(
-                mouse.x - (imagePos.x + availableSpace.x / 2) + active.resolution[0] / 2,
-                mouse.y - (imagePos.y + availableSpace.y / 2) + active.resolution[1] / 2
+                mouse.x - (imagePos.x + availableSpace.x / 2) + resolution.x / 2,
+                mouse.y - (imagePos.y + availableSpace.y / 2) + resolution.y / 2
             );
         case VF_FILL: {
-            float outputRatio = float(active.resolution[0]) / active.resolution[1];
+            float outputRatio = float(resolution.x) / resolution.y;
             float width = std::min(availableSpace.x, availableSpace.y * outputRatio);    
             float height = std::min(availableSpace.y, availableSpace.x / outputRatio);    
 
@@ -257,21 +255,16 @@ ImVec2 UI::mouseToComputePixel(){
             float heightRemaining = availableSpace.y - height;
 
             return ImVec2(
-                (mouse.x - imagePos.x - widthRemaining / 2) * active.resolution[0] / width,
-                (mouse.y - imagePos.y - heightRemaining / 2) * active.resolution[1] / height 
+                (mouse.x - imagePos.x - widthRemaining / 2) * resolution.x / width,
+                (mouse.y - imagePos.y - heightRemaining / 2) * resolution.y / height 
             );
         }
         case VF_STRETCH:
             return ImVec2(
-                (mouse.x - imagePos.x) * active.resolution[0] / availableSpace.x,
-                (mouse.y - imagePos.y) * active.resolution[1] / availableSpace.y
+                (mouse.x - imagePos.x) * resolution.x / availableSpace.x,
+                (mouse.y - imagePos.y) * resolution.y / availableSpace.y
             );
         default:
             return ImVec2(0,0);
     }
 }
-
-Settings* UI::getSettings(){
-    return &active;
-}
-

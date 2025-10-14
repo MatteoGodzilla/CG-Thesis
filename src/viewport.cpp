@@ -57,13 +57,13 @@ Viewport::Viewport(){
     glEnableVertexAttribArray(1);
 }
 
-void Viewport::update(Settings* settings, GLuint textureId){
-    GLuint activeProgram = programs[settings->filter];
+void Viewport::update(GLuint textureId, int rw, int rh, int vw, int vh, ViewportFilter filter){
+    GLuint activeProgram = programs[filter];
     glUseProgram(activeProgram);
     raytracerSizeId = glGetUniformLocation(activeProgram,"raytracerOutputSize");
     viewportSizeId = glGetUniformLocation(activeProgram,"viewportSize");
-    glUniform2f(raytracerSizeId, settings->resolution[0], settings->resolution[1]);
-    glUniform2f(viewportSizeId, settings->viewportSize[0], settings->viewportSize[1]);
+    glUniform2f(raytracerSizeId, rw, rh);
+    glUniform2f(viewportSizeId, vw, vh);
     glBindTexture(GL_TEXTURE_2D, textureId);
 }
 

@@ -54,8 +54,7 @@ int mainUI(std::istream& input, std::string lastOpenedFile){
 
     UI ui;
     Raytracer raytracer("compute.shader");
-    Settings* defaultSettings = ui.getSettings();
-    raytracer.update(defaultSettings->resolution[0], defaultSettings->resolution[1]);
+    raytracer.update(ui.resolution.x, ui.resolution.y);
 
     Viewport viewport;
 
@@ -79,11 +78,10 @@ int mainUI(std::istream& input, std::string lastOpenedFile){
         glfwPollEvents();
 
         //---Renderer---
-        Settings* settings = ui.getSettings();
-        int w = settings->resolution[0];
-        int h = settings->resolution[1];
+        int w = ui.resolution.x;
+        int h = ui.resolution.y;
         bool dispatchedThisFrame = false;
-        if(ui.dispatch.getState() || (settings->alwaysDispatch && ui.outdatedRender.getState())){
+        if(ui.dispatch.getState() || (ui.alwaysDispatch && ui.outdatedRender.getState())){
             raytracer.update(w, h);
             raytracer.dispatch(w, h);
             ui.dispatch.clear();
@@ -168,8 +166,8 @@ int mainUI(std::istream& input, std::string lastOpenedFile){
         framebuffer.bind();
         glClearColor(0,0,0,1);
         glClear(GL_COLOR_BUFFER_BIT);
-        viewport.update(settings, raytracer.getOutputTexture());
-        viewport.draw(settings->filter);
+        viewport.update(raytracer.getOutputTexture(), w, h, ui.viewportSize.x, ui.viewportSize.y, ui.filter);
+        viewport.draw(ui.filter);
         framebuffer.unbind();
       
         //---UI---
