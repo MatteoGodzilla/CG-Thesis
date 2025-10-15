@@ -2,9 +2,12 @@
 
 struct Planet {
     vec3 position;
-    vec3 color;
     float radius;
     float mass;
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 emission;
+    float luminosity;
 };
 
 struct Ray {
@@ -15,6 +18,19 @@ struct Ray {
 struct Plane {
     vec3 origin;
     vec3 normal;
+};
+
+const uint HIT_BACKGROUND = 0;
+const uint HIT_PLANET = 1;
+const uint HIT_LENS = 2;
+
+struct RayHit {
+    Ray ray;
+    float t;
+    float distanceTraveled;
+    uint hitType;
+    int deflections;
+    int planetIndex;
 };
 
 layout(local_size_x = 1, local_size_y = 1) in;
@@ -36,12 +52,6 @@ uniform vec2 backgroundGridSize;
 uniform float backgroundDistance;
 uniform vec3 backgroundColorA;
 uniform vec3 backgroundColorB;
-
-//Hit 'enum'
-const uint HIT_BACKGROUND = 0;
-const uint HIT_PLANET = 1;
-const uint HIT_LENS = 2;
-
 
 //Orthographic projection
 Ray viewportToWorldRay(vec2 viewNorm){
@@ -183,7 +193,7 @@ void main(){
 
         if(intersectionType == HIT_PLANET){
             //shade planet
-            pixel.rgb = data[closestPlanetIndex].color;
+            pixel.rgb = data[closestPlanetIndex].diffuse;
             break;
         } else if (intersectionType == HIT_BACKGROUND){
             pixel.rgb = backgroundGrid(p, backPlane);

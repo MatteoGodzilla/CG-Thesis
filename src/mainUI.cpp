@@ -3,8 +3,6 @@
 void GLAPIENTRY MessageCallback( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam ) {
     if(type == GL_DEBUG_TYPE_ERROR){
         std::cerr << "GL ERROR: " << message << std::endl; 
-    } else {
-        std::cout << "LOG: " << message << std::endl;
     }
 }
 
@@ -36,8 +34,7 @@ int mainUI(std::istream& input, std::string lastOpenedFile){
     const GLubyte* vendor = glGetString(GL_VENDOR);
     const GLubyte* renderer = glGetString(GL_RENDERER);
 
-    std::cout << vendor << std::endl;
-    std::cout << renderer << std::endl;
+    std::cout << "Using " << renderer << " by " << vendor << std::endl;
 
     //Init ImGui
     IMGUI_CHECKVERSION();
