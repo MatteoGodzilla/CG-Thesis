@@ -81,8 +81,11 @@ int mainUI(std::istream& input, std::string lastOpenedFile){
         int w = ui.resolution.x;
         int h = ui.resolution.y;
         bool dispatchedThisFrame = false;
-        if(ui.dispatch.getState() || (ui.alwaysDispatch && ui.outdatedRender.getState())){
+        if(ui.dispatch.getState() || (ui.outdatedRender.getState() && ui.alwaysDispatch)){
             raytracer.update(w, h);
+            std::vector<PlanetGLSL> converted = planetsToGLSL(&planets);
+            glBindBuffer(GL_SHADER_STORAGE_BUFFER, transmissionBuffer);
+            glBufferData(GL_SHADER_STORAGE_BUFFER, converted.size() * sizeof(PlanetGLSL), converted.data(), GL_STATIC_READ);
             raytracer.dispatch(w, h);
             ui.dispatch.clear();
             ui.outdatedRender.clear();
@@ -97,19 +100,12 @@ int mainUI(std::istream& input, std::string lastOpenedFile){
                 if(newInput.is_open()){
                     planets.clear();
                     deserializeAll(newInput, &(raytracer.camera), &(raytracer.background), &planets);
-                    ui.updateUniverse.set();
+                    ui.outdatedRender.set();
                     lastOpenedFile = std::string(f);
                     newInput.close();
                 }
             }
             ui.loadUniverse.clear();
-        }
-
-        if(ui.updateUniverse.getState()){
-            std::vector<PlanetGLSL> converted = planetsToGLSL(&planets);
-            glBindBuffer(GL_SHADER_STORAGE_BUFFER, transmissionBuffer);
-            glBufferData(GL_SHADER_STORAGE_BUFFER, converted.size() * sizeof(PlanetGLSL), converted.data(), GL_STATIC_READ);
-            ui.updateUniverse.clear();
         }
 
         if(ui.saveUniverse.getState()){

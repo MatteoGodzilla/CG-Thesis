@@ -98,6 +98,16 @@ void UI::quickActions(){
     if(ImGui::Button("Save universe")){
         saveUniverse.set();
     }
+    /*
+    ImGui::Text("dispatch:%i", dispatch.getState());
+    ImGui::Text("loadUniverse:%i", loadUniverse.getState());
+    ImGui::Text("saveUniverse:%i", saveUniverse.getState());
+    ImGui::Text("saveUniverseAs:%i", saveUniverseAs.getState());
+    ImGui::Text("dirtyUniverse:%i", dirtyUniverse.getState());
+    ImGui::Text("exportImage:%i", exportImage.getState());
+    ImGui::Text("loadCompute:%i", loadCompute.getState());
+    ImGui::Text("outdatedRender:%i", outdatedRender.getState());
+    */
     ImGui::End();
 }
 
@@ -119,7 +129,7 @@ void UI::universe(Camera *camera, Background* background, std::vector<Planet>* r
             .ambient = glm::vec3(0,0,0),
             .diffuse = glm::vec3(0,0,0),
             .emission = glm::vec3(0,0,0),
-            .brightness = 0
+            .luminosity = 0
         });
         dirtyUniverse.set();
         outdatedRender.set();
@@ -189,7 +199,7 @@ void UI::universe(Camera *camera, Background* background, std::vector<Planet>* r
             modified |= ImGui::ColorEdit3("Ambient Color", ambientArray);
             modified |= ImGui::ColorEdit3("Diffuse Color", diffuseArray);
             modified |= ImGui::ColorEdit3("Emission Color", emissionArray);
-            modified |= ImGui::DragFloat("Brightness", &(p.brightness), 1.0f, 0.0f, 1e10);
+            modified |= ImGui::DragFloat("Brightness", &(p.luminosity), 1.0f, 0.0f, 1e10, "%.3e");
 
             if(ImGui::Button("Remove")){
                 ref->erase(ref->begin() + i);
@@ -202,8 +212,7 @@ void UI::universe(Camera *camera, Background* background, std::vector<Planet>* r
                 p.ambient = glm::vec3(ambientArray[0], ambientArray[1], ambientArray[2]);
                 p.diffuse = glm::vec3(diffuseArray[0], diffuseArray[1], diffuseArray[2]);
                 p.emission = glm::vec3(emissionArray[0], emissionArray[1], emissionArray[2]);
-                p.brightness = std::max(0.0f, p.brightness);
-                updateUniverse.set();
+                p.luminosity = std::max(0.0f, p.luminosity);
                 dirtyUniverse.set();
                 outdatedRender.set();
             }

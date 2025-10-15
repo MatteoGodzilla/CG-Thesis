@@ -11,7 +11,7 @@ std::vector<PlanetGLSL> planetsToGLSL(std::vector<Planet>* ref){
             .ambient = p.ambient,
             .diffuse = p.diffuse,
             .emission = p.emission,
-            .brightness = p.brightness,
+            .luminosity = p.luminosity,
         });
     }
     return result;

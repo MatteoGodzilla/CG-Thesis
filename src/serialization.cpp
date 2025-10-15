@@ -32,7 +32,7 @@ void deserializeAll(std::istream& inFile, Camera* camera, Background* background
         inFile >> res.ambient.x >> res.ambient.y >> res.ambient.z;
         inFile >> res.diffuse.x >> res.diffuse.y >> res.diffuse.z;
         inFile >> res.emission.x >> res.emission.y >> res.emission.z;
-        inFile >> res.brightness;
+        inFile >> res.luminosity;
         ref->push_back(res);
         getline(inFile, temp); //consume the newline after the radius
         getline(inFile, temp); //consume the empty line afterwards
@@ -62,7 +62,7 @@ void serializeAll(std::ostream& outFile, Camera* camera, Background* background,
         outFile << p.ambient.x << " " <<  p.ambient.y << " " <<  p.ambient.z << std::endl;
         outFile << p.diffuse.x << " " <<  p.diffuse.y << " " <<  p.diffuse.z << std::endl;
         outFile << p.emission.x << " " <<  p.emission.y << " " <<  p.emission.z << std::endl;
-        outFile << p.brightness << std::endl;
+        outFile << p.luminosity << std::endl;
         outFile << std::endl;
     }
 }

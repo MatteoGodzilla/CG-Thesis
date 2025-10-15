@@ -13,7 +13,7 @@ struct Planet{
     glm::vec3 ambient; //r,g,b
     glm::vec3 diffuse; //r,g,b
     glm::vec3 emission; //r,g,b
-    float brightness; //watts?
+    float luminosity; //watts
 };
 
 struct PlanetGLSL {
@@ -23,7 +23,7 @@ struct PlanetGLSL {
     alignas(16) glm::vec3 ambient; //r,g,b
     alignas(16) glm::vec3 diffuse; //r,g,b
     alignas(16) glm::vec3 emission; //r,g,b
-    float brightness; //watts?
+    float luminosity; //watts
 };
 
 std::vector<PlanetGLSL> planetsToGLSL(std::vector<Planet>* ref);

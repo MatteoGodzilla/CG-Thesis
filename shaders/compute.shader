@@ -7,7 +7,7 @@ struct Planet {
     vec3 ambient;
     vec3 diffuse;
     vec3 emission;
-    float brightness;
+    float luminosity;
 };
 
 struct Ray {
@@ -173,18 +173,22 @@ void main(){
     if(firstHit.hitType == HIT_PLANET){
         //shade planet
         pixel.rgb = data[firstHit.planetIndex].ambient;
+        for(int i = 0; i < data.length(); i++){
+            if(data[i].luminosity > 0 && i != firstHit.planetIndex){
+                //Point-light luminosity
+                vec3 hitPoint = rayPoint(firstHit.ray, firstHit.t);
+                vec3 towardsPlanet = normalize(data[i].position - hitPoint); 
+                vec3 normal = normalize(hitPoint - data[firstHit.planetIndex].position);
+                vec3 color = data[i].emission * data[firstHit.planetIndex].diffuse;
+                float distance = length(hitPoint - data[i].position); // we assume it's a point light for this example, when in reality it isn't
+                float factor = data[i].luminosity / (4 * 3.1415926 * distance * distance); 
+                pixel.rgb += max(0, dot(normal, towardsPlanet)) * factor * color;
+            }
+        }
     } else if (firstHit.hitType == HIT_BACKGROUND){
         vec3 p = rayPoint(firstHit.ray, firstHit.t);
         pixel.rgb = backgroundGrid(p, backPlane);
     } 
-
-    /*
-    debug.r = firstHit.planetIndex;
-    debug.g = firstHit.hitType;
-    debug.b = firstHit.deflections;
-    */
-    debug.rgb = firstHit.ray.pos;
-    debug.a = firstHit.deflections;
 
     imageStore(texOutput, pixelCoords, pixel);
     imageStore(debugOutput, pixelCoords, debug);
