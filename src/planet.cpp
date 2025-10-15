@@ -6,9 +6,12 @@ std::vector<PlanetGLSL> planetsToGLSL(std::vector<Planet>* ref){
         Planet& p = ref->at(i);
         result.push_back({
             .position = p.position,
-            .color = p.color,
             .radius = p.radius,
-            .mass = p.mass
+            .mass = p.mass,
+            .ambient = p.ambient,
+            .diffuse = p.diffuse,
+            .emission = p.emission,
+            .brightness = p.brightness,
         });
     }
     return result;

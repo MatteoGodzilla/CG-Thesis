@@ -7,7 +7,7 @@ void UI::begin(){
     ImGui::DockSpaceOverViewport();
 }
 
-void UI::settings(){
+void UI::menuBar(){
     bool openModal = false;
     ImGui::BeginMainMenuBar();
     if(ImGui::BeginMenu("File")){
@@ -61,9 +61,6 @@ void UI::settings(){
         }
         ImGui::EndMenu(); 
     }
-    if(ImGui::BeginMenu("Help")){
-        ImGui::EndMenu(); 
-    }
 
     if(openModal){
         ImGui::OpenPopup("Set custom resolution");
@@ -88,6 +85,22 @@ void UI::settings(){
     ImGui::EndMainMenuBar();
 }
 
+void UI::quickActions(){
+    ImGui::Begin("Quick Actions");
+    ImGui::Checkbox("Continuous rendering", &alwaysDispatch);
+    std::string renderLabel = "Render";
+    if(outdatedRender.getState()){
+        renderLabel += " *";
+    }
+    if(ImGui::Button(renderLabel.c_str())){
+        dispatch.set();
+    }
+    if(ImGui::Button("Save universe")){
+        saveUniverse.set();
+    }
+    ImGui::End();
+}
+
 void UI::universe(Camera *camera, Background* background, std::vector<Planet>* ref){
     ImGuiWindowFlags flag = 0;
     if(dirtyUniverse.getState()){
@@ -101,9 +114,12 @@ void UI::universe(Camera *camera, Background* background, std::vector<Planet>* r
         ref->push_back({
             .name = std::string(newName, BUF_SIZE),
             .position = glm::vec3(0,0,0),
-            .color = glm::vec3(0,0,0),
             .radius = 1,
-            .mass = 1
+            .mass = 1,
+            .ambient = glm::vec3(0,0,0),
+            .diffuse = glm::vec3(0,0,0),
+            .emission = glm::vec3(0,0,0),
+            .brightness = 0
         });
         dirtyUniverse.set();
         outdatedRender.set();
@@ -163,12 +179,17 @@ void UI::universe(Camera *camera, Background* background, std::vector<Planet>* r
         Planet& p = ref->at(i);
         if(ImGui::TreeNode(p.name.c_str())){
             float posArray[3] = {p.position.x, p.position.y, p.position.z};
-            float colorArray[3] = {p.color.x, p.color.y, p.color.z};
+            float ambientArray[3] = {p.ambient.x, p.ambient.y, p.ambient.z};
+            float diffuseArray[3] = {p.diffuse.x, p.diffuse.y, p.diffuse.z};
+            float emissionArray[3] = {p.emission.x, p.emission.y, p.emission.z};
             bool modified = false;
             modified |= ImGui::DragFloat3("Position (m)", posArray, 1.0f, 0.0f, 0.0f, "%.3e");
-            modified |= ImGui::ColorEdit3("Color", colorArray);
             modified |= ImGui::InputFloat("Radius (m)", &(p.radius), 1.0f, 0.0f, "%.3e");
             modified |= ImGui::InputFloat("Mass (kg)", &(p.mass), 1.0f, 0.0f, "%.3e");
+            modified |= ImGui::ColorEdit3("Ambient Color", ambientArray);
+            modified |= ImGui::ColorEdit3("Diffuse Color", diffuseArray);
+            modified |= ImGui::ColorEdit3("Emission Color", emissionArray);
+            modified |= ImGui::DragFloat("Brightness", &(p.brightness), 1.0f, 0.0f, 1e10);
 
             if(ImGui::Button("Remove")){
                 ref->erase(ref->begin() + i);
@@ -178,7 +199,10 @@ void UI::universe(Camera *camera, Background* background, std::vector<Planet>* r
 
             if(modified){
                 p.position = glm::vec3(posArray[0], posArray[1], posArray[2]);
-                p.color = glm::vec3(colorArray[0], colorArray[1], colorArray[2]);
+                p.ambient = glm::vec3(ambientArray[0], ambientArray[1], ambientArray[2]);
+                p.diffuse = glm::vec3(diffuseArray[0], diffuseArray[1], diffuseArray[2]);
+                p.emission = glm::vec3(emissionArray[0], emissionArray[1], emissionArray[2]);
+                p.brightness = std::max(0.0f, p.brightness);
                 updateUniverse.set();
                 dirtyUniverse.set();
                 outdatedRender.set();

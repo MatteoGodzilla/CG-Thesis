@@ -24,12 +24,15 @@ void deserializeAll(std::istream& inFile, Camera* camera, Background* background
     getline(inFile, temp); //get the number of planets
     int count = std::stoi(temp);
     for(int i = 0; i < count; i++){
-        Planet res = {"##", {0,0,0}, {0,0,0}, 0, 0};
+        Planet res = {"##", {0,0,0}, 0, 0, {0,0,0}, {0,0,0}, {0,0,0}, 0};
         getline(inFile, res.name);
         inFile >> res.position.x >> res.position.y >> res.position.z;
-        inFile >> res.color.x >> res.color.y >> res.color.z;
         inFile >> res.radius;
         inFile >> res.mass;
+        inFile >> res.ambient.x >> res.ambient.y >> res.ambient.z;
+        inFile >> res.diffuse.x >> res.diffuse.y >> res.diffuse.z;
+        inFile >> res.emission.x >> res.emission.y >> res.emission.z;
+        inFile >> res.brightness;
         ref->push_back(res);
         getline(inFile, temp); //consume the newline after the radius
         getline(inFile, temp); //consume the empty line afterwards
@@ -54,9 +57,12 @@ void serializeAll(std::ostream& outFile, Camera* camera, Background* background,
     for(auto& p : *ref){
         outFile << p.name << std::endl;
         outFile << p.position.x << " " << p.position.y << " " <<  p.position.z << std::endl;
-        outFile << p.color.x << " " <<  p.color.y << " " <<  p.color.z << std::endl;
         outFile << p.radius << std::endl;
         outFile << p.mass << std::endl;
+        outFile << p.ambient.x << " " <<  p.ambient.y << " " <<  p.ambient.z << std::endl;
+        outFile << p.diffuse.x << " " <<  p.diffuse.y << " " <<  p.diffuse.z << std::endl;
+        outFile << p.emission.x << " " <<  p.emission.y << " " <<  p.emission.z << std::endl;
+        outFile << p.brightness << std::endl;
         outFile << std::endl;
     }
 }

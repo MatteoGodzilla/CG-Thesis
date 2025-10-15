@@ -32,7 +32,7 @@ int mainRenderer(int width, int height, std::istream& input, std::string output)
     std::cout << renderer << std::endl;
 
     //Create raytracer
-    Raytracer raytracer("compute.shader");
+    Raytracer raytracer("shaders/compute.shader");
     raytracer.update(width, height);
     //load universe
     GLuint transmissionBuffer;

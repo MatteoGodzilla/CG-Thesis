@@ -53,7 +53,7 @@ int mainUI(std::istream& input, std::string lastOpenedFile){
     }
 
     UI ui;
-    Raytracer raytracer("compute.shader");
+    Raytracer raytracer("shaders/compute.shader");
     raytracer.update(ui.resolution.x, ui.resolution.y);
 
     Viewport viewport;
@@ -176,7 +176,8 @@ int mainUI(std::istream& input, std::string lastOpenedFile){
             ui.copyDebugTexture(raytracer.getDebugTexture());
         }
         //ImGui::ShowDemoWindow(); 
-        ui.settings();
+        ui.menuBar();
+        ui.quickActions();
         ui.universe(&(raytracer.camera), &(raytracer.background), &planets);
         ui.viewport(framebuffer.getColorTexture(), raytracer.getOutputTexture(), &planets);
         ui.end();

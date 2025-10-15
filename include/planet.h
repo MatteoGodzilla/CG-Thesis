@@ -5,17 +5,25 @@
 
 struct Planet{
     std::string name;
+    //Basic info
     glm::vec3 position; //x,y,z, in meters
-    glm::vec3 color; //r,g,b
     float radius; //in meters
     float mass; //in kilograms
+    //Graphic stuff
+    glm::vec3 ambient; //r,g,b
+    glm::vec3 diffuse; //r,g,b
+    glm::vec3 emission; //r,g,b
+    float brightness; //watts?
 };
 
 struct PlanetGLSL {
     alignas(16) glm::vec3 position; //x,y,z, in meters
-    alignas(16) glm::vec3 color; //r,g,b
     float radius; //in meters
     float mass; //in kilograms
+    alignas(16) glm::vec3 ambient; //r,g,b
+    alignas(16) glm::vec3 diffuse; //r,g,b
+    alignas(16) glm::vec3 emission; //r,g,b
+    float brightness; //watts?
 };
 
 std::vector<PlanetGLSL> planetsToGLSL(std::vector<Planet>* ref);

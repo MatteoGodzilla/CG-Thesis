@@ -22,7 +22,8 @@
 class UI {
 public:
     void begin();
-    void settings();
+    void menuBar();
+    void quickActions();
     void copyDebugTexture(GLuint debugTexture);
     void viewport(GLuint framebufferTexture, GLuint computeTexture, std::vector<Planet>* ref);
     void universe(Camera *camera, Background* background, std::vector<Planet>* ref);

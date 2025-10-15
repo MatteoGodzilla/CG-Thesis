@@ -1,4 +1,5 @@
 #include "shader.h"
+//#include <iostream>
 
 GLuint compileShader(const char* sourceFile, GLenum type){
     std::ifstream shaderFile = std::ifstream(sourceFile);
@@ -12,6 +13,8 @@ GLuint compileShader(const char* sourceFile, GLenum type){
     }
     GLuint result = glCreateShader(type);    
     const char* shaderSourceRaw = shaderSource.c_str();
+    //std::cout << "==================================================" << std::endl;
+    //std::cout << shaderSourceRaw << std::endl;
     glShaderSource(result, 1, &shaderSourceRaw, NULL); 
     glCompileShader(result);
     return result;
