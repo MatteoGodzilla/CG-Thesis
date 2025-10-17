@@ -73,6 +73,7 @@ void UI::menuBar(){
         if(ImGui::Button("Apply resolution")){
             resolution.x = dirtyResolution[0];
             resolution.y = dirtyResolution[1];
+            validDebugBuffer.clear();
             ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
@@ -122,7 +123,7 @@ void UI::universe(Camera *camera, Background* background, std::vector<Planet>* r
     ImGui::SameLine();
     if(ImGui::Button("Add")){
         ref->push_back({
-            .name = std::string(newName, BUF_SIZE),
+            .name = std::string(newName, strlen(newName)),
             .position = glm::vec3(0,0,0),
             .radius = 1,
             .mass = 1,
@@ -131,6 +132,7 @@ void UI::universe(Camera *camera, Background* background, std::vector<Planet>* r
             .emission = glm::vec3(0,0,0),
             .luminosity = 0
         });
+        memset(newName, 0, BUF_SIZE);
         dirtyUniverse.set();
         outdatedRender.set();
     }
@@ -235,7 +237,7 @@ void UI::viewport(GLuint framebufferTexture, GLuint computeTexture, std::vector<
     int x = std::floor(mouse.x);
     int y = std::floor(mouse.y);
     ImGui::Image((ImTextureID)framebufferTexture, availableSpace);
-    if(ImGui::IsItemHovered() && x >= 0 && y >= 0 && x < resolution.x && y < resolution.y) {
+    if(validDebugBuffer.getState() && ImGui::IsItemHovered() && x >= 0 && y >= 0 && x < resolution.x && y < resolution.y) {
         int width = resolution.x;
         float r = debugBuffer.at((x + y * width) * 4 + 0);
         float g = debugBuffer.at((x + y * width) * 4 + 1);
@@ -259,6 +261,7 @@ void UI::copyDebugTexture(GLuint debugTexture){
     debugBuffer = std::vector<float>(width * height * 4);
     glBindTexture(GL_TEXTURE_2D, debugTexture);
     glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, &debugBuffer[0]);
+    validDebugBuffer.set();
 }
 
 void UI::end(){

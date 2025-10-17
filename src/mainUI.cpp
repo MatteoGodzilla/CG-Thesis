@@ -3,6 +3,8 @@
 void GLAPIENTRY MessageCallback( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam ) {
     if(type == GL_DEBUG_TYPE_ERROR){
         std::cerr << "GL ERROR: " << message << std::endl; 
+    } else {
+        std::cout << message << std::endl;
     }
 }
 
@@ -50,25 +52,14 @@ int mainUI(std::istream& input, std::string lastOpenedFile){
     }
 
     UI ui;
-    Raytracer raytracer("shaders/compute.shader");
-    raytracer.update(ui.resolution.x, ui.resolution.y);
-
     Viewport viewport;
-
-    //Buffer
-    GLuint transmissionBuffer;
-    glGenBuffers(1, &transmissionBuffer);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, transmissionBuffer);
+    Framebuffer framebuffer;
+    Raytracer raytracer("shaders/compute.shader");
 
     std::vector<Planet> planets;
     deserializeAll(input, &(raytracer.camera), &(raytracer.background), &planets);
-
-    std::vector<PlanetGLSL> converted = planetsToGLSL(&planets);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, converted.size() * sizeof(PlanetGLSL), converted.data(), GL_STATIC_READ);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, transmissionBuffer);
-
-    //Framebuffer
-    Framebuffer framebuffer;
+    planets.at(0).albedoTextureFile = "2k_earth_daymap.jpg";
+    raytracer.update(ui.resolution.x, ui.resolution.y, &planets);
     framebuffer.update(WINDOW_WIDTH, WINDOW_HEIGHT);
 
     while (!glfwWindowShouldClose(window)) {
@@ -79,11 +70,9 @@ int mainUI(std::istream& input, std::string lastOpenedFile){
         int h = ui.resolution.y;
         bool dispatchedThisFrame = false;
         if(ui.dispatch.getState() || (ui.outdatedRender.getState() && ui.alwaysDispatch)){
-            raytracer.update(w, h);
-            std::vector<PlanetGLSL> converted = planetsToGLSL(&planets);
-            glBindBuffer(GL_SHADER_STORAGE_BUFFER, transmissionBuffer);
-            glBufferData(GL_SHADER_STORAGE_BUFFER, converted.size() * sizeof(PlanetGLSL), converted.data(), GL_STATIC_READ);
-            raytracer.dispatch(w, h);
+            raytracer.update(w, h, &planets);
+            raytracer.dispatch();
+            
             ui.dispatch.clear();
             ui.outdatedRender.clear();
             dispatchedThisFrame = true;

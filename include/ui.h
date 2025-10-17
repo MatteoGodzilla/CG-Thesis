@@ -48,5 +48,6 @@ private:
     int dirtyResolution[2] = {DEFAULT_WIDTH, DEFAULT_HEIGHT};
     char newName[BUF_SIZE] = {0};
     std::vector<float> debugBuffer;
+    Flag validDebugBuffer;
 };
 

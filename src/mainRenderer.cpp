@@ -28,26 +28,16 @@ int mainRenderer(int width, int height, std::istream& input, std::string output)
     const GLubyte* vendor = glGetString(GL_VENDOR);
     const GLubyte* renderer = glGetString(GL_RENDERER);
 
-    std::cout << vendor << std::endl;
-    std::cout << renderer << std::endl;
+    std::cout << "Using " << renderer << " by " << vendor << std::endl;
 
     //Create raytracer
     Raytracer raytracer("shaders/compute.shader");
-    raytracer.update(width, height);
-    //load universe
-    GLuint transmissionBuffer;
-    glGenBuffers(1, &transmissionBuffer);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, transmissionBuffer);
-
     std::vector<Planet> planets;
     deserializeAll(input, &(raytracer.camera), &(raytracer.background), &planets);
-    //Send planets to gpu
-    std::vector<PlanetGLSL> converted = planetsToGLSL(&planets);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, converted.size() * sizeof(PlanetGLSL), converted.data(), GL_STATIC_READ);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, transmissionBuffer);
+    raytracer.update(width, height, &planets);
 
     //dispatch
-    raytracer.dispatch(width, height);
+    raytracer.dispatch();
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
     
     //save file

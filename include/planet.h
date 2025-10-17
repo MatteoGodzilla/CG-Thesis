@@ -14,6 +14,7 @@ struct Planet{
     glm::vec3 diffuse; //r,g,b
     glm::vec3 emission; //r,g,b
     float luminosity; //watts
+    std::string albedoTextureFile;
 };
 
 struct PlanetGLSL {

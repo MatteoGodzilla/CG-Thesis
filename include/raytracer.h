@@ -2,16 +2,18 @@
 #include <iostream>
 #include "glm/vec2.hpp"
 #include "glm/vec3.hpp"
+#include "stb_image.h"
 #include "shader.h"
 #include "camera.h"
 #include "background.h"
+#include "planet.h"
 
 class Raytracer {
 public:
     Raytracer(const char* computeShaderFile);
-    void update(int textureWidth, int textureHeight);
+    void update(int textureWidth, int textureHeight, std::vector<Planet>* planets);
     void changeProgram(const char* filename);
-    void dispatch(int x, int y);
+    void dispatch();
     GLuint getOutputTexture();
     GLuint getDebugTexture();
     //actual camera values
@@ -31,6 +33,8 @@ public:
 private: 
     GLuint textureOutput;
     GLuint debugOutput;
+    GLuint transmissionBuffer;
+    GLuint planetTextures;
     GLuint program = 0;
     GLuint viewportSizeId;
     //Camera stuff
@@ -45,5 +49,6 @@ private:
     GLuint backgroundColorAId;
     GLuint backgroundColorBId;
     //other
-    int workGroupMax[2] = {0,0};
+    glm::ivec2 workGroupMax;
+    glm::ivec2 dispatchSize;
 };
