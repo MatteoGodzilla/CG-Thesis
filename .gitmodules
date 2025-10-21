@@ -13,3 +13,6 @@
 [submodule "tinyfiledialogs-code"]
 	path = tinyfiledialogs-code
 	url = https://git.code.sf.net/p/tinyfiledialogs/code
+[submodule "json"]
+	path = json
+	url = https://github.com/nlohmann/json.git
