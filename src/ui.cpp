@@ -191,11 +191,15 @@ void UI::universe(Camera *camera, Background* background, std::vector<Planet>* r
         Planet& p = ref->at(i);
         if(ImGui::TreeNode(p.name.c_str())){
             float posArray[3] = {p.position.x, p.position.y, p.position.z};
+            float northArray[3] = {p.northVector.x, p.northVector.y, p.northVector.z};
+            float zeroDegArray[3] = {p.zeroDegree.x, p.zeroDegree.y, p.zeroDegree.z};
             float ambientArray[3] = {p.ambient.x, p.ambient.y, p.ambient.z};
             float diffuseArray[3] = {p.diffuse.x, p.diffuse.y, p.diffuse.z};
             float emissionArray[3] = {p.emission.x, p.emission.y, p.emission.z};
             bool modified = false;
             modified |= ImGui::DragFloat3("Position (m)", posArray, 1.0f, 0.0f, 0.0f, "%.3e");
+            modified |= ImGui::DragFloat3("North", northArray, 1.0f, 0.0f, 1.0f);
+            modified |= ImGui::DragFloat3("Zero Degree", zeroDegArray, 1.0f, 0.0f, 1.0f);
             modified |= ImGui::InputFloat("Radius (m)", &(p.radius), 1.0f, 0.0f, "%.3e");
             modified |= ImGui::InputFloat("Mass (kg)", &(p.mass), 1.0f, 0.0f, "%.3e");
             modified |= ImGui::ColorEdit3("Ambient Color", ambientArray);
@@ -203,6 +207,21 @@ void UI::universe(Camera *camera, Background* background, std::vector<Planet>* r
             modified |= ImGui::ColorEdit3("Emission Color", emissionArray);
             modified |= ImGui::DragFloat("Brightness", &(p.luminosity), 1.0f, 0.0f, 1e10, "%.3e");
 
+            ImGui::Text("Texture: %s", p.albedoTextureFile.c_str());
+            if(ImGui::Button("Load Texture")){
+                const char* filters[] = {"*.png", "*.jpg", "*.gif"};
+                const char* f = tinyfd_openFileDialog("Load texture", "", 3, filters, "image file", 0);
+                if(f != nullptr){
+                    std::filesystem::path path(f);
+                    //TODO: THIS ONLY WORKS ON LINUX, ADD PLATFORM DEPENDENT CODE FOR WINDOWS SUPPORT
+                    std::filesystem::path executable = std::filesystem::canonical("/proc/self/exe");
+                    p.albedoTextureFile = std::filesystem::relative(path, executable.parent_path()).string();
+                    dirtyUniverse.set();
+                    outdatedRender.set();
+                }
+            }
+            
+            ImGui::SameLine();
             if(ImGui::Button("Remove")){
                 ref->erase(ref->begin() + i);
                 dirtyUniverse.set();
@@ -211,6 +230,8 @@ void UI::universe(Camera *camera, Background* background, std::vector<Planet>* r
 
             if(modified){
                 p.position = glm::vec3(posArray[0], posArray[1], posArray[2]);
+                p.northVector = glm::vec3(northArray[0], northArray[1], northArray[2]);
+                p.zeroDegree = glm::vec3(zeroDegArray[0], zeroDegArray[1], zeroDegArray[2]);
                 p.ambient = glm::vec3(ambientArray[0], ambientArray[1], ambientArray[2]);
                 p.diffuse = glm::vec3(diffuseArray[0], diffuseArray[1], diffuseArray[2]);
                 p.emission = glm::vec3(emissionArray[0], emissionArray[1], emissionArray[2]);

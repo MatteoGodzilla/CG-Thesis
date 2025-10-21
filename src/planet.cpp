@@ -6,6 +6,8 @@ std::vector<PlanetGLSL> planetsToGLSL(std::vector<Planet>* ref){
         Planet& p = ref->at(i);
         result.push_back({
             .position = p.position,
+            .northVector = p.northVector,
+            .zeroDegree = p.zeroDegree,
             .radius = p.radius,
             .mass = p.mass,
             .ambient = p.ambient,

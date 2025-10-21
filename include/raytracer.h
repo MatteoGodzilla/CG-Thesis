@@ -35,6 +35,7 @@ private:
     GLuint debugOutput;
     GLuint transmissionBuffer;
     GLuint planetTextures;
+    GLuint planetTextureSize;
     GLuint program = 0;
     GLuint viewportSizeId;
     //Camera stuff

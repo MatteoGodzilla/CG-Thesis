@@ -58,7 +58,6 @@ int mainUI(std::istream& input, std::string lastOpenedFile){
 
     std::vector<Planet> planets;
     deserializeAll(input, &(raytracer.camera), &(raytracer.background), &planets);
-    planets.at(0).albedoTextureFile = "2k_earth_daymap.jpg";
     raytracer.update(ui.resolution.x, ui.resolution.y, &planets);
     framebuffer.update(WINDOW_WIDTH, WINDOW_HEIGHT);
 

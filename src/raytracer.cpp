@@ -35,7 +35,6 @@ Raytracer::Raytracer(const char* computeShaderFile){
     //glBindBuffer(GL_SHADER_STORAGE_BUFFER, transmissionBuffer); //?
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, transmissionBuffer);
 
-
     glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &(workGroupMax.x));
     glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &(workGroupMax.y));
 }
@@ -66,9 +65,9 @@ void Raytracer::update(int textureWidth, int textureHeight, std::vector<Planet>*
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, transmissionBuffer);
     glBufferData(GL_SHADER_STORAGE_BUFFER, converted.size() * sizeof(PlanetGLSL), converted.data(), GL_STATIC_READ);
     //Planets' textures
-    if(planetTextures != 0){
-        glDeleteTextures(1, &planetTextures);
-    }
+    glDeleteTextures(1, &planetTextures);
+    glDeleteTextures(1, &planetTextureSize);
+
     glGenTextures(1, &planetTextures);
     glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D_ARRAY, planetTextures);
@@ -76,21 +75,32 @@ void Raytracer::update(int textureWidth, int textureHeight, std::vector<Planet>*
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+    glGenTextures(1, &planetTextureSize);
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_2D, planetTextureSize);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
     int maxWidth = 0;
     int maxHeight = 0;
     for(size_t i = 0; i < planets->size(); i++){
         std::string albedoFile = planets->at(i).albedoTextureFile;
         if(!albedoFile.empty()){
-            std::cout << "Trying to load " << albedoFile << std::endl;
             int width;
             int height;
             int channels;
-            int info = stbi_info(albedoFile.c_str(), &width, &height, &channels);
+            stbi_info(albedoFile.c_str(), &width, &height, &channels);
             maxWidth = std::max(maxWidth, width);
             maxHeight = std::max(maxHeight, height);
         }
     }
+    glBindTexture(GL_TEXTURE_2D_ARRAY, planetTextures);
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, maxWidth, maxHeight, planets->size());
+    glBindTexture(GL_TEXTURE_2D, planetTextureSize);
+    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RG32F, 2, planets->size() );
     for(size_t i = 0; i < planets->size(); i++){
         std::string albedoFile = planets->at(i).albedoTextureFile;
         if(!albedoFile.empty()){
@@ -101,7 +111,11 @@ void Raytracer::update(int textureWidth, int textureHeight, std::vector<Planet>*
             unsigned char* data = stbi_load(albedoFile.c_str(), &x, &y, &channels, 3);
             if(data != nullptr){
                 std::cout << "Loaded planet " << i << std::endl;
-                glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0,0,0, x, y, 1, GL_RGB, GL_UNSIGNED_BYTE, data); 
+                glBindTexture(GL_TEXTURE_2D_ARRAY, planetTextures);
+                glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, x, y, 1, GL_RGB, GL_UNSIGNED_BYTE, data); 
+                glBindTexture(GL_TEXTURE_2D, planetTextureSize);
+                float texRelativeSize[2] = {float(x) / maxWidth, float(y) / maxHeight};
+                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, i, 2, 1, GL_RG, GL_FLOAT, texRelativeSize);
                 stbi_image_free(data);
             }
         }

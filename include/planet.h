@@ -7,6 +7,8 @@ struct Planet{
     std::string name;
     //Basic info
     glm::vec3 position; //x,y,z, in meters
+    glm::vec3 northVector; //normalized
+    glm::vec3 zeroDegree; //normalized
     float radius; //in meters
     float mass; //in kilograms
     //Graphic stuff
@@ -19,6 +21,8 @@ struct Planet{
 
 struct PlanetGLSL {
     alignas(16) glm::vec3 position; //x,y,z, in meters
+    alignas(16) glm::vec3 northVector; //normalized
+    alignas(16) glm::vec3 zeroDegree; //normalized
     float radius; //in meters
     float mass; //in kilograms
     alignas(16) glm::vec3 ambient; //r,g,b

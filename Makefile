@@ -1,5 +1,5 @@
 FLAGS = -Wall -Wpedantic -g -std=c++20
-INCLUDE = -Iinclude -Iglad/include -Iimgui -Iimgui/backends -Iglm -Icxxopts/include -Itinyfiledialogs-code
+INCLUDE = -Iinclude -Iglad/include -Iimgui -Iimgui/backends -Iglm -Icxxopts/include -Itinyfiledialogs-code -Ijson/include
 LIBS = -lglfw -lOpenGL -lX11 # Linux
 #LIBS = -lglfw3 -lcomdlg32 -lole32 # Mingw64
 

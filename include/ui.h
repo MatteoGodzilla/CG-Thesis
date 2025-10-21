@@ -1,9 +1,11 @@
 #pragma once
 #include <string>
 #include <iostream>
+#include <filesystem>
 #include <glad/glad.h>
 #include <cmath>
 #include "glm/vec2.hpp"
+#include "tinyfiledialogs.h"
 //Imgui
 #include "imgui.h"
 #include "imgui_impl_glfw.h"

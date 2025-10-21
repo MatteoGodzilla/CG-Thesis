@@ -2,6 +2,8 @@
 
 struct Planet {
     vec3 position;
+    vec3 north;
+    vec3 zeroDegree;
     float radius;
     float mass;
     vec3 ambient;
@@ -41,6 +43,7 @@ layout(std430, binding = 2) readonly buffer transmissionBuffer {
     Planet data[];
 };
 layout(binding = 3) uniform sampler2DArray planetTextures;
+layout(binding = 4) uniform sampler2D planetTextureSize;
 
 uniform vec2 viewportSize;
 //Camera
@@ -49,6 +52,8 @@ uniform vec3 lookDir;
 uniform vec3 upVector;
 uniform float vFov;
 //Background
+const int BG_SOLID = 0;
+const int BG_GRID = 1;
 uniform int backgroundType;
 uniform vec2 backgroundGridSize;
 uniform float backgroundDistance;
@@ -76,20 +81,24 @@ vec3 rayPoint(Ray ray, float t){
 }
 
 vec3 backgroundGrid(vec3 point, Plane backPlane){
-    vec3 planeUp = upVector; 
-    vec3 planeRight = cross(upVector, backPlane.normal);
-    vec3 K = point - backPlane.origin;
-    float planeX = dot(K, planeRight) / length(planeRight);
-    float planeY = dot(K, planeUp) / length(planeUp);
-    float resX = mod(planeX, backgroundGridSize.x) / backgroundGridSize.x;
-    float resY = mod(planeY, backgroundGridSize.y) / backgroundGridSize.y;
+    if(backgroundType == BG_SOLID){
+        return backgroundColorA;
+    } else {
+        vec3 planeUp = upVector; 
+        vec3 planeRight = cross(upVector, backPlane.normal);
+        vec3 K = point - backPlane.origin;
+        float planeX = dot(K, planeRight) / length(planeRight);
+        float planeY = dot(K, planeUp) / length(planeUp);
+        float resX = mod(planeX, backgroundGridSize.x) / backgroundGridSize.x;
+        float resY = mod(planeY, backgroundGridSize.y) / backgroundGridSize.y;
 
-    const float gridThickness = 0.1;
-    vec3 result = backgroundColorA;
-    if(resX < gridThickness || resY < gridThickness){
-        result = backgroundColorB;
+        const float gridThickness = 0.1;
+        vec3 result = backgroundColorA;
+        if(resX < gridThickness || resY < gridThickness){
+            result = backgroundColorB;
+        }
+        return result;
     }
-    return result;
 }
 
 Ray bendRay(Ray original, Planet p, vec3 closestPoint){
@@ -192,45 +201,31 @@ void main(){
 
     if(firstHit.hitType == HIT_PLANET){
         //shade planet
+        Planet hit = data[firstHit.planetIndex];
         vec3 hitPoint = rayPoint(firstHit.ray, firstHit.t);
-        vec3 zeroDegVector = normalize(vec3(0,0,-1));
-        vec3 northVector = normalize(upVector+ vec3(1,0,0) * tan(0.404));
-        vec3 uv = spherePointToUV(hitPoint, data[firstHit.planetIndex], northVector, zeroDegVector);
-        debug.rgb = uv; 
+        vec3 zeroDegVector = normalize(hit.zeroDegree);
+        vec3 northVector = normalize(hit.north);
+        vec3 uv = spherePointToUV(hitPoint, hit, northVector, zeroDegVector);
+        //debug.rgb = uv; 
+        vec2 uvScale = texture(planetTextureSize, vec2(0, float(firstHit.planetIndex) / data.length())).rg;
+        debug.rg = uvScale; 
         vec2 uvNormalized = uv.xy / 3.1415926;
         //debug.rg = uvNormalized;
-        vec4 texColor = texture(planetTextures, vec3(uvNormalized.x, uvNormalized.y, firstHit.planetIndex));
-        /*
-        vec3 hitPoint = rayPoint(firstHit.ray, firstHit.t);
-        vec3 zeroDegVector = vec3(1,0,0);
-        vec3 northVector = normalize(upVector + zeroDegVector * length(upVector) * tan(0.4));
-        vec3 uv = spherePointToUV(hitPoint, data[firstHit.planetIndex], northVector, zeroDegVector);
-       
-        vec2 uvNormalized = uv.xy / 3.1415926;
-        debug.rg = uvNormalized;
-        debug.b = uv.b / data[firstHit.planetIndex].radius;
-     
-        float parallel = uvNormalized.y * 10 - floor(uvNormalized.y * 10);
-        float meridian = uvNormalized.x * 10 - floor(uvNormalized.x * 10);
-
-        float gridFactor = max(parallel, meridian);
-
-        pixel.rgb = data[firstHit.planetIndex].ambient + data[firstHit.planetIndex].diffuse * gridFactor * gridFactor;
-        */
+        vec4 texColor = texture(planetTextures, vec3(uvNormalized.x * uvScale.x, uvNormalized.y * uvScale.y, firstHit.planetIndex));
         float totalFactor = 0;
         for(int i = 0; i < data.length(); i++){
             if(data[i].luminosity > 0 && i != firstHit.planetIndex){
                 //Point-light luminosity
                 vec3 hitPoint = rayPoint(firstHit.ray, firstHit.t);
                 vec3 towardsPlanet = normalize(data[i].position - hitPoint); 
-                vec3 normal = normalize(hitPoint - data[firstHit.planetIndex].position);
-                vec3 color = data[i].emission * data[firstHit.planetIndex].diffuse;
+                vec3 normal = normalize(hitPoint - hit.position);
+                vec3 color = data[i].emission * hit.diffuse;
                 float distance = length(hitPoint - data[i].position); // we assume it's a point light for this example, when in reality it isn't
                 float factor = data[i].luminosity / (4 * 3.1415926 * distance * distance); 
                 totalFactor += factor;
             }
         }
-        pixel.rgb = mix(data[firstHit.planetIndex].ambient, texColor.rgb * totalFactor, texColor.a);
+        pixel.rgb = mix(hit.ambient, texColor.rgb * min(totalFactor,1), texColor.a);
     } else if (firstHit.hitType == HIT_BACKGROUND){
         vec3 p = rayPoint(firstHit.ray, firstHit.t);
         pixel.rgb = backgroundGrid(p, backPlane);

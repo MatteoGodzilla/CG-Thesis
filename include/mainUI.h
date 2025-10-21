@@ -20,6 +20,6 @@
 
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720
-#define UNIVERSE "universe.txt"
+#define UNIVERSE "universe.json"
 
 int mainUI(std::istream& input, std::string lastOpenedFile);

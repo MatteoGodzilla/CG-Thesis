@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include "nlohmann/json.hpp"
 #include "planet.h"
 #include "camera.h"
 #include "background.h"
