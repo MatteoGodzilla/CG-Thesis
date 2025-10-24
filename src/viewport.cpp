@@ -4,18 +4,18 @@
 Viewport::Viewport(){
     //Vertex
     GLuint vertexId = compileShader("shaders/vertex.shader", GL_VERTEX_SHADER);
-    programs[VF_PIXEL_PERFECT] = linkProgram({
+    programs.emplace(VF_PIXEL_PERFECT, linkProgram({
         vertexId, 
         compileShader("shaders/frag_pixelperfect.shader", GL_FRAGMENT_SHADER)
-    });
-    programs[VF_FILL] = linkProgram({
+    }));
+    programs.emplace(VF_FILL, linkProgram({
         vertexId, 
         compileShader("shaders/frag_fill.shader", GL_FRAGMENT_SHADER)
-    });
-    programs[VF_STRETCH] = linkProgram({
+    }));
+    programs.emplace(VF_STRETCH, linkProgram({
         vertexId, 
         compileShader("shaders/frag_stretch.shader", GL_FRAGMENT_SHADER)
-    });
+    }));
 
     //VAO    
     glGenVertexArrays(1, &quadVAO);
@@ -68,7 +68,7 @@ void Viewport::update(GLuint textureId, int rw, int rh, int vw, int vh, Viewport
 }
 
 void Viewport::draw(ViewportFilter filter){
-    GLuint activeProgram = programs[filter];
+    GLuint activeProgram = programs.at(filter);
     glUseProgram(activeProgram);
     glBindVertexArray(quadVAO);
     glActiveTexture(GL_TEXTURE0);

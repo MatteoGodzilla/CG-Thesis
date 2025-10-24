@@ -1,7 +1,8 @@
 #include "mainRenderer.h"
 
 int mainRenderer(int width, int height, std::istream& input, std::string output){
-    //We cannot use opengl functions without a window
+    //TODO: look into opengl context without window
+    //for now we just create one hidden window just to resolve the function pointers
     /* Initialize the library */
     if (!glfwInit())
         return 1;

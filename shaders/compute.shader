@@ -13,8 +13,8 @@ struct Planet {
 };
 
 struct Ray {
-    vec3 pos;
-    vec3 dir;
+    vec3 position;
+    vec3 direction;
 };
 
 struct Plane {
@@ -43,6 +43,7 @@ layout(std430, binding = 2) readonly buffer transmissionBuffer {
     Planet data[];
 };
 layout(binding = 3) uniform sampler2DArray planetTextures;
+//this should be a shader storage buffer instead
 layout(binding = 4) uniform sampler2D planetTextureSize;
 
 uniform vec2 viewportSize;
@@ -72,12 +73,12 @@ Ray viewportToWorldRay(vec2 viewNorm){
 
 //Returns the t value corresponding to the intersection point between ray and plane
 float rayPlaneIntersection(Ray ray, Plane plane){
-    vec3 k = ray.pos - plane.origin;
-    return -dot(k, plane.normal) / dot(ray.dir, plane.normal);
+    vec3 k = ray.position - plane.origin;
+    return -dot(k, plane.normal) / dot(ray.direction, plane.normal);
 }
 
 vec3 rayPoint(Ray ray, float t){
-    return ray.pos + t * ray.dir;
+    return ray.position + t * ray.direction;
 }
 
 vec3 backgroundGrid(vec3 point, Plane backPlane){
@@ -107,9 +108,9 @@ Ray bendRay(Ray original, Planet p, vec3 closestPoint){
     const float G = 6.67430e-11;
     float alpha = 4 * G * p.mass / (C * C * impactRadius);
     //float alpha = p.mass / impactRadius;
-    float deviation = length(original.dir) * tan(alpha);
+    float deviation = length(original.direction) * tan(alpha);
     vec3 towardsCenter = normalize(p.position - closestPoint);
-    vec3 newDir = normalize(original.dir + towardsCenter * deviation);
+    vec3 newDir = normalize(original.direction + towardsCenter * deviation);
     return Ray(closestPoint, newDir);
 }
 
@@ -136,7 +137,8 @@ RayHit castRay(Ray initial, float furthestT){
     RayHit result = RayHit(initial, furthestT, 0, HIT_BACKGROUND, 0, -1);
 
     int deflections = 0;
-    for(int j = 0; j < 10; j++){
+    const int MAX = 10;
+    for(int j = 0; j < MAX; j++){
         float minT = furthestT;
         uint intersectionType = HIT_BACKGROUND;
         int closestPlanetIndex = -1;
@@ -157,8 +159,8 @@ RayHit castRay(Ray initial, float furthestT){
                     float distanceFromPlane = sqrt(data[i].radius * data[i].radius - distanceFromCenter * distanceFromCenter);
                     vec3 frontPoint = intersectionPoint + planeNormal * distanceFromPlane;
                     vec3 backPoint = intersectionPoint - planeNormal * distanceFromPlane;
-                    float frontT = length(frontPoint - result.ray.pos) / length(result.ray.dir);
-                    float backT = length(backPoint - result.ray.pos) / length(result.ray.dir);
+                    float frontT = length(frontPoint - result.ray.position) / length(result.ray.direction);
+                    float backT = length(backPoint - result.ray.position) / length(result.ray.direction);
                     minT = min(frontT, backT);
                     intersectionType = HIT_PLANET;
                 }
@@ -166,10 +168,9 @@ RayHit castRay(Ray initial, float furthestT){
         }
 
         vec3 p = rayPoint(result.ray, minT);
-        result.distanceTraveled += length(p - result.ray.pos);
+        result.distanceTraveled += length(p - result.ray.position);
         result.t = minT;
         if(intersectionType == HIT_PLANET){
-            //shade planet
             result.hitType = HIT_PLANET;
             result.planetIndex = closestPlanetIndex;
             break;
