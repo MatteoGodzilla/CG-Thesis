@@ -22,4 +22,4 @@
 #define WINDOW_HEIGHT 720
 #define UNIVERSE "universe.json"
 
-int mainUI(std::istream& input, std::string lastOpenedFile);
+int mainUI(std::istream& input, std::string lastOpenedFile, std::string firstComputeShader);

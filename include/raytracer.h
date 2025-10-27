@@ -8,6 +8,8 @@
 #include "background.h"
 #include "planet.h"
 
+#define COMPUTE_SHADER "shaders/compute.shader" 
+
 class Raytracer {
 public:
     Raytracer(const char* computeShaderFile);

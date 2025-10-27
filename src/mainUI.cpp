@@ -8,7 +8,7 @@ void GLAPIENTRY MessageCallback( GLenum source, GLenum type, GLuint id, GLenum s
     }
 }
 
-int mainUI(std::istream& input, std::string lastOpenedFile){
+int mainUI(std::istream& input, std::string lastOpenedFile, std::string firstComputeShader){
     /* Initialize the library */
     if (!glfwInit())
         return 1;
@@ -54,7 +54,7 @@ int mainUI(std::istream& input, std::string lastOpenedFile){
     UI ui;
     Viewport viewport;
     Framebuffer framebuffer;
-    Raytracer raytracer("shaders/compute.shader");
+    Raytracer raytracer(firstComputeShader.c_str());
 
     std::vector<Planet> planets;
     deserializeAll(input, &(raytracer.camera), &(raytracer.background), &planets);

@@ -15,7 +15,8 @@ int main(int argc, char** argv){
     ;
     options.add_options("Input options")
         ("i", "Universe input file", cxxopts::value<std::string>()->default_value(UNIVERSE))
-        ("stdin", "Load input file from standard input", cxxopts::value<bool>()->default_value("false"))
+        ("c", "Compute shader input file", cxxopts::value<std::string>()->default_value(COMPUTE_SHADER))
+        ("stdin", "Read universe from standard input", cxxopts::value<bool>()->default_value("false"))
     ;
 
     options.add_options("Render mode options")
@@ -68,8 +69,10 @@ int main(int argc, char** argv){
             return ret;
         }
     } else if(argc == 1 || result["gui"].as<bool>()){
+        std::string compute = result["c"].as<std::string>();
+
         if(result.count("stdin") == 1){
-            return mainUI(std::cin, "");
+            return mainUI(std::cin, "", compute);
         } else {
             //Attempt to load from file (default behaviour)
             std::string filename = result["i"].as<std::string>();
@@ -78,7 +81,7 @@ int main(int argc, char** argv){
                 std::cerr << "COULD NOT OPEN FILE" << std::endl;
                 return 1;
             }
-            int ret = mainUI(input, filename);
+            int ret = mainUI(input, filename, compute);
             input.close();
             return ret;
         }
