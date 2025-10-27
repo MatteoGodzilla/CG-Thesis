@@ -55,10 +55,9 @@ int mainUI(std::istream& input, std::string lastOpenedFile, std::string firstCom
     Viewport viewport;
     Framebuffer framebuffer;
     Raytracer raytracer(firstComputeShader.c_str());
-
-    std::vector<Planet> planets;
-    deserializeAll(input, &(raytracer.camera), &(raytracer.background), &planets);
-    raytracer.update(ui.resolution.x, ui.resolution.y, &planets);
+    Universe universe;
+    deserializeAll(input, &universe);
+    raytracer.update(ui.resolution.x, ui.resolution.y, &universe);
     framebuffer.update(WINDOW_WIDTH, WINDOW_HEIGHT);
 
     while (!glfwWindowShouldClose(window)) {
@@ -69,7 +68,7 @@ int mainUI(std::istream& input, std::string lastOpenedFile, std::string firstCom
         int h = ui.resolution.y;
         bool dispatchedThisFrame = false;
         if(ui.dispatch.getState() || (ui.outdatedRender.getState() && ui.alwaysDispatch)){
-            raytracer.update(w, h, &planets);
+            raytracer.update(w, h, &universe);
             raytracer.dispatch();
             
             ui.dispatch.clear();
@@ -83,8 +82,7 @@ int mainUI(std::istream& input, std::string lastOpenedFile, std::string firstCom
             if(f != nullptr){
                 std::ifstream newInput(f);
                 if(newInput.is_open()){
-                    planets.clear();
-                    deserializeAll(newInput, &(raytracer.camera), &(raytracer.background), &planets);
+                    deserializeAll(newInput, &universe);
                     ui.outdatedRender.set();
                     lastOpenedFile = std::string(f);
                     newInput.close();
@@ -96,7 +94,7 @@ int mainUI(std::istream& input, std::string lastOpenedFile, std::string firstCom
         if(ui.saveUniverse.getState()){
             std::ofstream output(lastOpenedFile);
             if(output.is_open()){
-                serializeAll(output, &(raytracer.camera), &(raytracer.background), &planets);
+                serializeAll(output, &universe);
                 output.close();
             }
             ui.saveUniverse.clear();
@@ -108,7 +106,7 @@ int mainUI(std::istream& input, std::string lastOpenedFile, std::string firstCom
             if(f != nullptr){
                 std::ofstream output(f);
                 if(output.is_open()){
-                    serializeAll(output, &(raytracer.camera), &(raytracer.background), &planets);
+                    serializeAll(output, &universe);
                     lastOpenedFile = std::string(f);
                     output.close();
                 }
@@ -160,8 +158,8 @@ int mainUI(std::istream& input, std::string lastOpenedFile, std::string firstCom
         //ImGui::ShowDemoWindow(); 
         ui.menuBar();
         ui.quickActions();
-        ui.universe(&(raytracer.camera), &(raytracer.background), &planets);
-        ui.viewport(framebuffer.getColorTexture(), raytracer.getOutputTexture(), &planets);
+        ui.universe(&universe);
+        ui.viewport(framebuffer.getColorTexture(), raytracer.getOutputTexture());
         ui.end();
 
         glfwSwapBuffers(window);

@@ -4,34 +4,20 @@
 #include "glm/vec3.hpp"
 #include "stb_image.h"
 #include "shader.h"
-#include "camera.h"
-#include "background.h"
-#include "planet.h"
+#include "universe.h"
 
 #define COMPUTE_SHADER "shaders/compute.shader" 
 
 class Raytracer {
 public:
     Raytracer(const char* computeShaderFile);
-    void update(int textureWidth, int textureHeight, std::vector<Planet>* planets);
+    void update(int textureWidth, int textureHeight, Universe* universe);
     void changeProgram(const char* filename);
     void dispatch();
     GLuint getOutputTexture();
     GLuint getDebugTexture();
     //actual camera values
-    Camera camera = {
-        .position = {5,0,-5},
-        .look = {-1,0,0},
-        .up = {0,1,0},
-        .verticalFOV = 10
-    };
-    Background background {
-        .type = BG_SOLID,
-        .gridSize = glm::vec2(1e6, 1e6),
-        .distance = 1e6,
-        .colorA = glm::vec3(0, 0.1, 0.2),
-        .colorB = glm::vec3(0,0,0)
-    };
+    //TODO: maybe move these two outside? so that Raytracer only deals with sending to the GPU?
 private: 
     GLuint textureOutput;
     GLuint debugOutput;

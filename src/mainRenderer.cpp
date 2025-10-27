@@ -33,9 +33,9 @@ int mainRenderer(int width, int height, std::istream& input, std::string output)
 
     //Create raytracer
     Raytracer raytracer("shaders/compute.shader");
-    std::vector<Planet> planets;
-    deserializeAll(input, &(raytracer.camera), &(raytracer.background), &planets);
-    raytracer.update(width, height, &planets);
+    Universe universe;
+    deserializeAll(input, &universe);
+    raytracer.update(width, height, &universe);
 
     //dispatch
     raytracer.dispatch();

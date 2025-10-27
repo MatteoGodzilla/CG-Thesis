@@ -1,30 +1,43 @@
 #include "serialization.h"
 
-void deserializeAll(std::istream& inFile, Camera* camera, Background* background, std::vector<Planet>* ref){
+void deserializeAll(std::istream& inFile, Universe* ref){
     nlohmann::json res;
     inFile >> res;
 
+    ref->planets.clear();
+
     std::string cameraKey = "camera";
     nlohmann::json cameraPos = res[cameraKey]["position"];
-    camera->position = {cameraPos[0], cameraPos[1], cameraPos[2]}; 
+    ref->camera.position = {cameraPos[0], cameraPos[1], cameraPos[2]}; 
     nlohmann::json cameraLook = res[cameraKey]["look"];
-    camera->look = {cameraLook[0], cameraLook[1], cameraLook[2]}; 
+    ref->camera.look = {cameraLook[0], cameraLook[1], cameraLook[2]}; 
     nlohmann::json cameraUp = res[cameraKey]["up"];
-    camera->up = {cameraUp[0], cameraUp[1], cameraUp[2]}; 
-    camera->verticalFOV = res[cameraKey]["fov"];
+    ref->camera.up = {cameraUp[0], cameraUp[1], cameraUp[2]}; 
+    ref->camera.verticalFOV = res[cameraKey]["fov"];
 
     std::string backgroundKey = "background";
-    background->type = res[backgroundKey]["type"];
+    ref->background.type = res[backgroundKey]["type"];
     nlohmann::json backgroundGrid = res[backgroundKey]["gridSize"];
-    background->gridSize = {backgroundGrid[0], backgroundGrid[1]};
-    background->distance = res[backgroundKey]["distance"];
+    ref->background.gridSize = {backgroundGrid[0], backgroundGrid[1]};
+    ref->background.distance = res[backgroundKey]["distance"];
     nlohmann::json backgroundColorA = res[backgroundKey]["colorA"];
-    background->colorA = {backgroundColorA[0], backgroundColorA[1], backgroundColorA[2]};
+    ref->background.colorA = {backgroundColorA[0], backgroundColorA[1], backgroundColorA[2]};
     nlohmann::json backgroundColorB = res[backgroundKey]["colorB"];
-    background->colorB = {backgroundColorB[0], backgroundColorB[1], backgroundColorB[2]};
+    ref->background.colorB = {backgroundColorB[0], backgroundColorB[1], backgroundColorB[2]};
 
     for(auto& planet : res["planets"]){
-        Planet res = {"##", {0,0,0}, {0,0,0}, {0,0,0}, 0, 0, {0,0,0}, {0,0,0}, {0,0,0}, 0};
+        Planet res = {
+            .name = "##", 
+            .position = {0,0,0},
+            .northVector = {0,0,0},
+            .zeroDegree = {0,0,0},
+            .radius = 0,
+            .mass = 0,
+            .ambient = {0,0,0},
+            .diffuse = {0,0,0},
+            .emission = {0,0,0},
+            .luminosity = 0
+        };
         res.name = planet["name"];
         nlohmann::json planetPos = planet["position"];
         res.position = {planetPos[0], planetPos[1], planetPos[2]};
@@ -42,28 +55,28 @@ void deserializeAll(std::istream& inFile, Camera* camera, Background* background
         res.emission = {planetEmission[0], planetEmission[1], planetEmission[2]};
         res.luminosity = planet["luminosity"];
         res.albedoTextureFile = planet["albedoTexture"];
-        ref->push_back(res);
+        ref->planets.push_back(res);
     }
 }
 
-void serializeAll(std::ostream& outFile, Camera* camera, Background* background, std::vector<Planet>* ref){
+void serializeAll(std::ostream& outFile, Universe* ref){
     nlohmann::json j;
     j["camera"] = {
-        {"position", {camera->position.x, camera->position.y, camera->position.z}},
-        {"look", {camera->look.x, camera->look.y, camera->look.z}},
-        {"up", {camera->up.x, camera->up.y, camera->up.z}},
-        {"fov", camera->verticalFOV}
+        {"position", {ref->camera.position.x, ref->camera.position.y, ref->camera.position.z}},
+        {"look", {ref->camera.look.x, ref->camera.look.y, ref->camera.look.z}},
+        {"up", {ref->camera.up.x, ref->camera.up.y, ref->camera.up.z}},
+        {"fov", ref->camera.verticalFOV}
     };
 
     j["background"] = {
-        {"type", background->type},
-        {"gridSize", {background->gridSize.x, background->gridSize.y}},
-        {"distance", background->distance},
-        {"colorA", {background->colorA.r, background->colorA.g, background->colorA.b}},
-        {"colorB", {background->colorB.r, background->colorB.g, background->colorB.b}}
+        {"type", ref->background.type},
+        {"gridSize", {ref->background.gridSize.x, ref->background.gridSize.y}},
+        {"distance", ref->background.distance},
+        {"colorA", {ref->background.colorA.r, ref->background.colorA.g, ref->background.colorA.b}},
+        {"colorB", {ref->background.colorB.r, ref->background.colorB.g, ref->background.colorB.b}}
     };
 
-    for(auto& planet : *ref){
+    for(auto& planet : ref->planets){
         j["planets"].push_back({
             {"name", planet.name},
             {"position", {planet.position.x, planet.position.y, planet.position.z }},

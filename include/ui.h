@@ -11,11 +11,9 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 //Project
-#include "planet.h"
-#include "camera.h"
 #include "flag.h"
-#include "background.h"
 #include "viewportFilter.h"
+#include "universe.h"
 
 #define DEFAULT_WIDTH 800
 #define DEFAULT_HEIGHT 600
@@ -27,10 +25,10 @@ public:
     void menuBar();
     void quickActions();
     void copyDebugTexture(GLuint debugTexture);
-    void viewport(GLuint framebufferTexture, GLuint computeTexture, std::vector<Planet>* ref);
-    void universe(Camera *camera, Background* background, std::vector<Planet>* ref);
+    void viewport(GLuint framebufferTexture, GLuint computeTexture);
+    void universe(Universe* universe);
     void end();
-    //Flags: set by the ui, cleared by the outside
+    //Flags: set by the ui, cleared by mainUI 
     Flag dispatch = Flag(true);     //start render
     Flag loadUniverse;              //Trigger file loading dialog
     Flag saveUniverse;              //Save universe to file, directly

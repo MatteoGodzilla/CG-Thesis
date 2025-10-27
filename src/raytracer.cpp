@@ -39,7 +39,7 @@ Raytracer::Raytracer(const char* computeShaderFile){
     glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &(workGroupMax.y));
 }
 
-void Raytracer::update(int textureWidth, int textureHeight, std::vector<Planet>* planets){
+void Raytracer::update(int textureWidth, int textureHeight, Universe* universe){
     glUseProgram(program);
     //Set up output textures
     glBindTexture(GL_TEXTURE_2D, textureOutput); 
@@ -50,18 +50,18 @@ void Raytracer::update(int textureWidth, int textureHeight, std::vector<Planet>*
     glBindImageTexture(1, debugOutput, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
     glUniform2f(viewportSizeId, textureWidth, textureHeight);
     //Camera
-    glUniform3f(cameraPosId, camera.position.x, camera.position.y, camera.position.z);
-    glUniform3f(lookDirId, camera.look.x, camera.look.y, camera.look.z);
-    glUniform3f(upVectorId, camera.up.x, camera.up.y, camera.up.z);
-    glUniform1f(vFovId, camera.verticalFOV);
+    glUniform3f(cameraPosId, universe->camera.position.x, universe->camera.position.y, universe->camera.position.z);
+    glUniform3f(lookDirId, universe->camera.look.x, universe->camera.look.y, universe->camera.look.z);
+    glUniform3f(upVectorId, universe->camera.up.x, universe->camera.up.y, universe->camera.up.z);
+    glUniform1f(vFovId, universe->camera.verticalFOV);
     //Background
-    glUniform1i(backgroundTypeId, background.type); 
-    glUniform2f(backgroundGridSizeId, background.gridSize.x, background.gridSize.y);
-    glUniform1f(backgroundDistanceId, background.distance);
-    glUniform3f(backgroundColorAId, background.colorA.x, background.colorA.y, background.colorA.z);  
-    glUniform3f(backgroundColorBId, background.colorB.x, background.colorB.y, background.colorB.z);  
+    glUniform1i(backgroundTypeId, universe->background.type); 
+    glUniform2f(backgroundGridSizeId, universe->background.gridSize.x, universe->background.gridSize.y);
+    glUniform1f(backgroundDistanceId, universe->background.distance);
+    glUniform3f(backgroundColorAId, universe->background.colorA.x, universe->background.colorA.y, universe->background.colorA.z);  
+    glUniform3f(backgroundColorBId, universe->background.colorB.x, universe->background.colorB.y, universe->background.colorB.z);  
     //Planets
-    std::vector<PlanetGLSL> converted = planetsToGLSL(planets);
+    std::vector<PlanetGLSL> converted = planetsToGLSL(&(universe->planets));
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, transmissionBuffer);
     glBufferData(GL_SHADER_STORAGE_BUFFER, converted.size() * sizeof(PlanetGLSL), converted.data(), GL_STATIC_READ);
     //Planets' textures
@@ -86,8 +86,8 @@ void Raytracer::update(int textureWidth, int textureHeight, std::vector<Planet>*
 
     int maxWidth = 0;
     int maxHeight = 0;
-    for(size_t i = 0; i < planets->size(); i++){
-        std::string albedoFile = planets->at(i).albedoTextureFile;
+    for(size_t i = 0; i < universe->planets.size(); i++){
+        std::string albedoFile = universe->planets.at(i).albedoTextureFile;
         if(!albedoFile.empty()){
             int width;
             int height;
@@ -98,11 +98,11 @@ void Raytracer::update(int textureWidth, int textureHeight, std::vector<Planet>*
         }
     }
     glBindTexture(GL_TEXTURE_2D_ARRAY, planetTextures);
-    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, maxWidth, maxHeight, planets->size());
+    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, maxWidth, maxHeight, universe->planets.size());
     glBindTexture(GL_TEXTURE_2D, planetTextureSize);
-    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RG32F, 2, planets->size() );
-    for(size_t i = 0; i < planets->size(); i++){
-        std::string albedoFile = planets->at(i).albedoTextureFile;
+    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RG32F, 2, universe->planets.size() );
+    for(size_t i = 0; i < universe->planets.size(); i++){
+        std::string albedoFile = universe->planets.at(i).albedoTextureFile;
         if(!albedoFile.empty()){
             std::cout << "Trying to load " << albedoFile << std::endl;
             int x;
@@ -121,7 +121,6 @@ void Raytracer::update(int textureWidth, int textureHeight, std::vector<Planet>*
         }
     }
 
-    //Dispatch size
     dispatchSize.x = std::min(textureWidth, workGroupMax.x);
     dispatchSize.y = std::min(textureHeight, workGroupMax.y);
 }

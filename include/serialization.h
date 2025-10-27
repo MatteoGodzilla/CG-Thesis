@@ -3,9 +3,7 @@
 #include <fstream>
 #include <vector>
 #include "nlohmann/json.hpp"
-#include "planet.h"
-#include "camera.h"
-#include "background.h"
+#include "universe.h"
 
-void deserializeAll(std::istream& input, Camera* camera, Background* background, std::vector<Planet>* ref);
-void serializeAll(std::ostream& output, Camera* camera, Background* background, std::vector<Planet>* ref);
+void deserializeAll(std::istream& input, Universe* ref);
+void serializeAll(std::ostream& output, Universe* ref);

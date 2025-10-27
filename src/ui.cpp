@@ -112,7 +112,7 @@ void UI::quickActions(){
     ImGui::End();
 }
 
-void UI::universe(Camera *camera, Background* background, std::vector<Planet>* ref){
+void UI::universe(Universe* ref){
     ImGuiWindowFlags flag = 0;
     if(dirtyUniverse.getState()){
         flag |= ImGuiWindowFlags_UnsavedDocument;
@@ -122,9 +122,11 @@ void UI::universe(Camera *camera, Background* background, std::vector<Planet>* r
     ImGui::InputText("Name", newName, BUF_SIZE);
     ImGui::SameLine();
     if(ImGui::Button("Add")){
-        ref->push_back({
+        ref->planets.push_back({
             .name = std::string(newName, strlen(newName)),
             .position = glm::vec3(0,0,0),
+            .northVector = glm::vec3(0,1,0),
+            .zeroDegree = glm::vec3(1,0,0),
             .radius = 1,
             .mass = 1,
             .ambient = glm::vec3(0,0,0),
@@ -138,18 +140,18 @@ void UI::universe(Camera *camera, Background* background, std::vector<Planet>* r
     }
     ImGui::SeparatorText("Edit");
     if(ImGui::TreeNode("Camera")){
-        float posArray[3] = {camera->position.x, camera->position.y, camera->position.z};
-        float lookArray[3] = {camera->look.x, camera->look.y, camera->look.z};
-        float upArray[3] = {camera->up.x, camera->up.y, camera->up.z};
+        float posArray[3] = {ref->camera.position.x, ref->camera.position.y, ref->camera.position.z};
+        float lookArray[3] = {ref->camera.look.x, ref->camera.look.y, ref->camera.look.z};
+        float upArray[3] = {ref->camera.up.x, ref->camera.up.y, ref->camera.up.z};
         bool modified = false;
         modified |= ImGui::DragFloat3("Position (m)",posArray, 1.0f, 0.0f, 0.0f, "%.3e");
         modified |= ImGui::DragFloat3("Look",lookArray);
         modified |= ImGui::DragFloat3("Up",upArray);
-        modified |= ImGui::DragFloat("Vertical FOV (m)", &(camera->verticalFOV), 1.0f, 0.0f, 0.0f, "%.3e");
+        modified |= ImGui::DragFloat("Vertical FOV (m)", &(ref->camera.verticalFOV), 1.0f, 0.0f, 0.0f, "%.3e");
         if(modified){
-            camera->position = glm::vec3(posArray[0], posArray[1], posArray[2]);
-            camera->look = glm::vec3(lookArray[0], lookArray[1], lookArray[2]);
-            camera->up = glm::vec3(upArray[0], upArray[1], upArray[2]);
+            ref->camera.position = glm::vec3(posArray[0], posArray[1], posArray[2]);
+            ref->camera.look = glm::vec3(lookArray[0], lookArray[1], lookArray[2]);
+            ref->camera.up = glm::vec3(upArray[0], upArray[1], upArray[2]);
             dirtyUniverse.set();
             outdatedRender.set();
         }
@@ -159,26 +161,26 @@ void UI::universe(Camera *camera, Background* background, std::vector<Planet>* r
     if(ImGui::TreeNode("Background")){
         bool modified = false;
         const char* types[] = {"Solid", "Grid"};
-        ImGui::Combo("Type", (int*)(&background->type), types, BG_SIZE);
+        ImGui::Combo("Type", (int*)(&ref->background.type), types, BG_SIZE);
 
-        if(background->type == BG_SOLID){
-            float colorATemp[] = {background->colorA.r, background->colorA.g, background->colorA.b};
+        if(ref->background.type == BG_SOLID){
+            float colorATemp[] = {ref->background.colorA.r, ref->background.colorA.g, ref->background.colorA.b};
             modified = ImGui::ColorEdit3("Color", colorATemp);
             if(modified){
-                background->colorA = glm::vec3(colorATemp[0], colorATemp[1], colorATemp[2]);
+                ref->background.colorA = glm::vec3(colorATemp[0], colorATemp[1], colorATemp[2]);
             }
-        } else if(background->type == BG_GRID){
-            float colorATemp[] = {background->colorA.r, background->colorA.g, background->colorA.b};
-            float colorBTemp[] = {background->colorB.r, background->colorB.g, background->colorB.b};
-            float gridArray[2] = {background->gridSize.x, background->gridSize.y};
+        } else if(ref->background.type == BG_GRID){
+            float colorATemp[] = {ref->background.colorA.r, ref->background.colorA.g, ref->background.colorA.b};
+            float colorBTemp[] = {ref->background.colorB.r, ref->background.colorB.g, ref->background.colorB.b};
+            float gridArray[2] = {ref->background.gridSize.x, ref->background.gridSize.y};
             modified |= ImGui::ColorEdit3("Color A", colorATemp);
             modified |= ImGui::ColorEdit3("Color B", colorBTemp);
             modified |= ImGui::DragFloat2("Grid Size (m)", gridArray, 1.0f, 0.0f, 0.0f, "%.3e");
-            modified |= ImGui::DragFloat("Distance (m)", &(background->distance), 1.0f, 0.0f, 0.0f, "%.3e");
+            modified |= ImGui::DragFloat("Distance (m)", &(ref->background.distance), 1.0f, 0.0f, 0.0f, "%.3e");
             if(modified){
-                background->gridSize = glm::vec2(gridArray[0], gridArray[1]);
-                background->colorA = glm::vec3(colorATemp[0], colorATemp[1], colorATemp[2]);
-                background->colorB = glm::vec3(colorBTemp[0], colorBTemp[1], colorBTemp[2]);
+                ref->background.gridSize = glm::vec2(gridArray[0], gridArray[1]);
+                ref->background.colorA = glm::vec3(colorATemp[0], colorATemp[1], colorATemp[2]);
+                ref->background.colorB = glm::vec3(colorBTemp[0], colorBTemp[1], colorBTemp[2]);
             }
         }
         if(modified){
@@ -187,8 +189,8 @@ void UI::universe(Camera *camera, Background* background, std::vector<Planet>* r
         }
         ImGui::TreePop();
     }
-    for(size_t i = 0; i < ref->size(); i++){
-        Planet& p = ref->at(i);
+    for(size_t i = 0; i < ref->planets.size(); i++){
+        Planet& p = ref->planets.at(i);
         if(ImGui::TreeNode(p.name.c_str())){
             float posArray[3] = {p.position.x, p.position.y, p.position.z};
             float northArray[3] = {p.northVector.x, p.northVector.y, p.northVector.z};
@@ -223,7 +225,7 @@ void UI::universe(Camera *camera, Background* background, std::vector<Planet>* r
             
             ImGui::SameLine();
             if(ImGui::Button("Remove")){
-                ref->erase(ref->begin() + i);
+                ref->planets.erase(ref->planets.begin() + i);
                 dirtyUniverse.set();
                 outdatedRender.set();
             }
@@ -246,7 +248,7 @@ void UI::universe(Camera *camera, Background* background, std::vector<Planet>* r
     ImGui::End();
 }
 
-void UI::viewport(GLuint framebufferTexture, GLuint computeTexture, std::vector<Planet>* ref){
+void UI::viewport(GLuint framebufferTexture, GLuint computeTexture){
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0,0));
     ImGui::Begin("ViewPort");
 
@@ -265,7 +267,6 @@ void UI::viewport(GLuint framebufferTexture, GLuint computeTexture, std::vector<
         float b = debugBuffer.at((x + y * width) * 4 + 2);
         float a = debugBuffer.at((x + y * width) * 4 + 3);
         ImGui::BeginTooltip();
-        //ImGui::Text(" %s\n %d", ref->at(planetIndex).name.c_str(), bounces);
         ImGui::Text(" %f\n %f\n %f\n %f\n x:%d y:%d\n ", r, g, b, a, x, y);
         ImGui::EndTooltip();
     }
